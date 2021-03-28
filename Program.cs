@@ -1,0 +1,94 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using static CubeAgain.Environment;
+using static CubeAgain.NeuralNetwork;
+
+namespace CubeAgain
+{
+    class Program
+    {
+        private const double Zero = 0.0;
+
+        static void Main(string[] args)
+        {
+            // Общая логика:
+            // 0. Задали позицию запутыванием.
+            // 1. Получили позицию.
+            // 2. Оценили сетью.
+            // 3. Записали оценку сети в обучающий сет.
+            // 4. Походили по дереву - получили уточнённые оценки.
+            // 5. Записали уточнённые оценки в обучающий сет.
+            // 6. Сделали ход - получили новую позицию.
+            // 7. Повторили шаги 2-6 пока не придём к выигрышу.
+            // 8. На собранном сете провели корректировку весов нейросети.
+            // 9. Повторили шаги 0-8 пока не научимся.
+
+            int[] MyState = SetSolved();                        // Устанавливаем решённую позицию в MyState.
+            SetNetworkStructure();                              // Задаём структуру нейронной сети.
+            Training.SaveNetWeights();                          // Запись текущих весов NN в тренировочную базу.
+            Graph.Analyzed += Training.AddTuple;                // Подписка тренировочной базы на анализ позиций.
+            Random Rnd = new Random();
+            SetScramble(MyState, Rnd.Next(1, 16), out Turns[] NewScramble);             // Задаём скрамбл длиной до 15 ходов и запутываем куб.
+            WriteScramble(NewScramble);                                                 // Выводим скрамбл в консоль
+            Position CurrentPos = new Position(MyState);                // Текущая позиция - это запутанная MyState.
+            Node CurrentNode = new Node(CurrentPos);                    // Текущий узел.
+            Graph EnvironGraph = new Graph();                           // Начинаем граф.
+            Path GamePath = new Path(CurrentNode);                      // Список ходов, по которым идёт игра.
+            const int DataSetVolume = 64;                               // Объём тренировочной базы данных!!!!!!!!!!!!!!!
+            TrainTuple[] MiniBatch = new TrainTuple[DataSetVolume];     // Тренировочная база данных.
+            for (int Tau = 0; Tau < DataSetVolume; Tau++)               // Набираем минибатч...
+            {
+                double[] ImprovedPolicy = MonteCarloTreeSearch.GetProbDistrib(CurrentNode, EnvironGraph);    // Улучшенная оценка ходов, на основе MCTS.
+                TrainTuple CurrentTuple = Training.DataBase[CurrentPos];                        // В словаре находим тупл, соответствующий CurrentPos.
+                ImprovedPolicy.CopyTo(CurrentTuple.ImprovedPolicy, 0);                          // Дописываем туда улучшенную оценку. Другие параметры были записаны ранее,
+                                                                                                // при создании нового узла в графе. Смотри класс Graph.
+                CurrentTuple.InstPathLength = GamePath.Length;                                  // Дописываем в тупл длину пути.
+                MiniBatch[Tau] = CurrentTuple;                                                  // Сохраняем теперь уже полноценный тупл в базу.
+                Turns BestTurn = Training.Argmax(ImprovedPolicy);                               // Нашли наилучший ход.
+                GamePath.AddStep(CurrentNode.Steps[BestTurn]);                                  // Добавили шаг в путь игры.
+                                                                                                // Сделали ход, согласно максимуму из ImprovedPolicy.
+                CurrentPos = CurrentPos.PosAfterTurn(BestTurn);                                 // Назначили новую позицию текущей.
+                CurrentNode = EnvironGraph.NodeFromPosition(CurrentPos);
+                
+                if (Solved.Equals(CurrentPos))                                          // Если текущая позиция - решённая...
+                {
+                    CurrentTuple.InstPathLength++;                                      // Увеличиваем длину пути в тупле.
+                    CurrentTuple.Reward = 1;                                            // Назначаем Reward.
+                                                                                        // TODO: определиться с Reward-ом.
+                    SetScramble(MyState, Rnd.Next(1, 16));                              // Задаём новый скрамбл, запутываем им текущую позицию.
+                    CurrentPos = new Position(MyState);                                 // Текущая позиция - это запутанная MyState.
+                    CurrentNode = EnvironGraph.NodeFromPosition(CurrentPos);            // Получаем узел по позиции.
+                    GamePath.Steps.Clear();                                             // Очищаем путь игры.
+                    GamePath.Begin = CurrentNode;                                       // Начинаем новый путь с текущего узла.
+                }
+            }
+            // TODO: Дописать этот блок!!!!!
+            // *** Корректировка весов ***
+            const double RegulCoeff = 0.001;                                            // Гиперпараметр регуляризации.
+            // Подсчитываем Лосс-функцию.
+            foreach (TrainTuple example in MiniBatch)
+            {
+                double z = GamePath.Length - example.InstPathLength;                    // z - Количество ходов, которое реально прошло до терминальной позиции
+                double v = example.Score;                                               // v - Оценка нейросети сколько ходов ещё до конца из этой позиции.
+                double VLoss = (z - v) * (z - v);                                       // Квадрат разности между этими величинами - есть VLoss.
+                double RLoss = Zero;                                                     // RLoss - L2 регуляризация, умноженная на коэффициент регуляризации.
+                RLoss += (from block in Blocks select block.FCL.RegSum).Sum();
+                RLoss *= RegulCoeff;
+                double PLoss = Zero;                                                     // PLoss - cross-entropy loss.
+                for (int i = 0; i < example.ImprovedPolicy.Length; i++)
+                {
+                    PLoss += example.ImprovedPolicy[i] * (Zero - Math.Log(example.SourcePolicy[i]));
+                }
+                double FullLoss = VLoss + PLoss + RLoss;
+
+                for (int i = NumBlocks - 1; i >= 0; i--)
+                {
+                    //Blocks[i]
+                }
+            }
+
+            WriteState(MyState);
+        }
+    }
+}
