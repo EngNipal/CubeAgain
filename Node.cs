@@ -7,14 +7,14 @@ namespace CubeAgain
 {
     public class Node// : IEquatable<Node>
     {
-        protected readonly Dictionary<Turns, Step> steps;
-        public ImmutableDictionary<Turns, Step> Steps { get; }
-        public bool WasVisited { get; set; }                        // Признак посещения узла.
-        public Position Position { get; }                           // Позиция, определяющая узел.
-        public Node(Position position)
+        private Dictionary<Turns, Step> steps { get; set; }
+        public ImmutableDictionary<Turns, Step> Steps => steps.ToImmutableDictionary();
+        public bool WasVisited { get; set; }
+        public Position Position { get; }
+        public Node(Position position)      // TODO: Обдумать как быть с закрытым словарём, Step-ами и обновлением пути - BackPropagation (2021-04-03)
         {
             Position = position ?? throw new ArgumentNullException(nameof(position));
-            steps = Enum.GetValues(typeof(Turns)).Cast<Turns>().ToDictionary(val => val, val => (Step)null); //new Step(new Move(), null));
+            steps = Enum.GetValues(typeof(Turns)).Cast<Turns>().ToDictionary(val => val, val => new Step(new Move(), null));
             ImmutableDictionary<Turns, Step> Steps = steps.ToImmutableDictionary();
             WasVisited = false;
         }
@@ -28,9 +28,9 @@ namespace CubeAgain
         /// </summary>
         /// <param name="moves"></param>
         /// <param name="step"></param>
-        public void AddStep(Turns moves, Step step)
+        public void AddStep(Turns turn, Step step)
         {
-            steps[moves] = step;
+            steps[turn] = step;
         }
         /// <summary>
         /// Метод, выбирающий лучший ход.
@@ -40,7 +40,7 @@ namespace CubeAgain
         {
             Turns BestTurn = Turns.R;
             double Max = double.MinValue;
-            foreach (Turns turn in Steps.Keys)                          // Определяем Turn с максимальным значением (Q + U) для соответствующего ему Move.
+            foreach (Turns turn in Steps.Keys)
             {
                 double Q = Steps[turn].Move.Quality;
                 double P = Position.Evaluation;
@@ -55,6 +55,20 @@ namespace CubeAgain
             }
             return BestTurn;
         }
-        
+        public void SetMovesPolicy()
+        {
+            foreach (Turns turn in steps.Keys)
+            {
+                steps[turn].Move.Policy = NeuralNetwork.Policy[(int)turn];
+            }
+        }
+        public void WinRateCorrection(Turns turn, double correction)
+        {
+            steps[turn].Move.WinRate += correction;
+        }
+        public void VisitCorrection(Turns turn, int correction)
+        {
+            steps[turn].Move.Visit += correction;
+        }
     }
 }

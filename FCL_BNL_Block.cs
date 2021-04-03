@@ -17,22 +17,27 @@ namespace CubeAgain
             BNL = new BNLayer(fcLayer.NumNeurons);
             Outputs = new double[fcLayer.NumNeurons];
         }
-        // Функции активации.
+        /// <summary>
+        /// Активационная функция "Сигмоид".
+        /// </summary>
+        /// <param name="x"></param>
         internal void Sigmoid(double[] x)
         {
             for (int i = 0; i < x.Length; i++)
             {
                 Outputs[i] = 1 / (1 + Math.Exp(0.0 - x[i]));
             }
-            //return Outputs;
         }
+        /// <summary>
+        /// Активационная функция RELU.
+        /// </summary>
+        /// <param name="x"></param>
         internal void RELU(double[] x)
         {
             for (int i = 0; i < x.Length; i++)
             {
                 Outputs[i] = x[i] > 0 ? x[i] : 0;
             }
-            //return Outputs;
         }
     }
 }

@@ -6,13 +6,9 @@ namespace CubeAgain
 {
     public class Position : IEquatable<Position>
     {
-        // Набор, определяющий позицию.
         public int[] State { get; private set; }
-        // Оценка позиции.
         public double Evaluation { get; set; }
-        // Хэшкод, определяющий уникальность позиции.
         public int HashCode { get; }
-        public bool Analyzed;
         public Position(IEnumerable<int> state)
         {
             State = state?.ToArray() ?? Array.Empty<int>();
@@ -38,6 +34,11 @@ namespace CubeAgain
         public override int GetHashCode() => HashCode;
         public override bool Equals(object obj) => Equals(obj as Position);
         public bool Equals(Position other) => other != null && HashCode == other.HashCode && State.SequenceEqual(other.State);
+        /// <summary>
+        /// Получение новой позиции
+        /// </summary>
+        /// <param name="turn"></param>
+        /// <returns>Новая позиция, полученная из данной, ходом <see paramname="turn"/></returns>
         public Position PosAfterTurn(Turns turn)
         {
             int[] tempState = new int[State.Length];

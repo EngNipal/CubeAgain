@@ -8,18 +8,14 @@ namespace CubeAgain
     {
         public Neuron(int numInputs, double[] weights, double bias)
         {
-            //ParentLayer = layer;
             InputQuantity = numInputs;
             _weights = new double[numInputs];
             Weights = weights;
             Bias = bias;
             Output = 0.0;
         }
-        // Ссылка на родительский слой.
-        //public FCLayer ParentLayer;
-        // Количество входных параметров на нейрон. Оно также равно количеству весов нейрона.
         public int InputQuantity { get; private set; }
-        // Веса.
+        private bool WeightsChanged { get; set; }
         private double[] _weights;
         public double[] Weights
         {
@@ -27,21 +23,38 @@ namespace CubeAgain
             set
             {
                 if (InputQuantity != value.Length)
+                {
                     throw new Exception("Неверная длина входных weights в Neuron");
-                _weights = value;
+                }
+                value.CopyTo(_weights, 0);                  // TODO: Проверить, так ли нужно копирование значений. Или можно обойтись присвоением (2021-04-03)
+                WeightsChanged = true;
             }
         }
-        // Смещение.
         public double Bias { get; set; }
-        // Выходной параметр.
-        public double Output { get; private set; }
-        internal double GetOutput(double[] inputs)
+        private double Output { get; set; }
+        /// <summary>
+        /// Метод получения выходного значения нейрона.
+        /// </summary>
+        /// <returns></returns>
+        public double GetOutput()
         {
-            for (int i = 0; i < InputQuantity; i++)
+            if (WeightsChanged)
             {
-                Output += Weights[i] * inputs[i];
+                throw new Exception("Веса нейрона изменились. Требуется массив входных значений.");
             }
-            Output += Bias;
+            return Output;
+        }
+        public double GetOutput(double[] inputs)
+        {
+            Output = 0.0;
+            if (WeightsChanged)
+            {
+                for (int i = 0; i < InputQuantity; i++)
+                {
+                    Output += Weights[i] * inputs[i];
+                }
+                Output += Bias;
+            }
             return Output;
         }
     }

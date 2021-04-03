@@ -64,12 +64,10 @@
   <ItemGroup>
     <Compile Include="BNLayer.cs" />
     <Compile Include="ConvLayer.cs" />
-    <Compile Include="Current.cs" />
     <Compile Include="FCLayer.cs" />
     <Compile Include="FCL_BNL_Block.cs" />
     <Compile Include="Graph.cs" />
     <Compile Include="Matrix.cs" />
-    <Compile Include="MonteCarloTreeSearch.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="NeuralNetwork.cs" />
     <Compile Include="Neuron.cs" />

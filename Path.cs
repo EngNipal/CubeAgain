@@ -11,7 +11,7 @@ namespace CubeAgain
         public Path(Node node)
         {
             Begin = node;
-            Length = 1;
+            Length = 0;
             Steps = new List<Step>();
         }
         public void AddStep(Step step)
@@ -26,6 +26,12 @@ namespace CubeAgain
                 Length++;
             }
         }
+        /// <summary>
+        /// Проверяет наличие позиции в пути.
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns><see langword="true"/> - если в пути есть переданная позиция,
+        /// <see langword="false"/> - в ином случае</returns>
         public bool Contains(Position position)
         {
             foreach (Step step in Steps)
@@ -37,15 +43,23 @@ namespace CubeAgain
             }
             return false;
         }
-        // Метод, обновляющий W и N для рёбер, по которым прошли. (Back Propagation)
-        public void BackPropagate()
+        /// <summary>
+        /// Обновляет W и N для рёбер, по которым прошли.
+        /// </summary>
+        public void BackPropagate() // TODO: См тудушку в классе Node.
         {
-            for (int i = Length - 1; i >= 0; i--)
+            if (Length > 0)
             {
-                Steps[i].Move.Visit++;
-                Steps[i].Move.WinRate += Steps[i].Node.Position.Evaluation;
+                for (int i = Length - 2; i >= 0; i--)
+                {
+                    Steps[i].Move.Visit++;
+                    Steps[i].Move.WinRate += Steps[i].Node.Position.Evaluation;
+                }
             }
         }
+        /// <summary>
+        /// Очищает путь и обнуляет начальный узел.
+        /// </summary>
         public void Clear()
         {
             Steps.Clear();

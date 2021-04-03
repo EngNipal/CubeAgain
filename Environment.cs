@@ -13,7 +13,7 @@ namespace CubeAgain
         // TODO (2020-12-27): Написать метод поворачивающий кубик в пространстве,
         // Если его левый задний кубик не на своём месте.
 
-        public static void Rotate(int[] State) // <<<<<<<<<<<<<<<<----- Не написан!!!!
+        public static void Rotate(int[] State)
         {
             
         }
@@ -232,7 +232,10 @@ namespace CubeAgain
         {
             return new int[] { 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6 };
         }
-        // Метод, выводящий состояние заданной позиции на экран.
+        /// <summary>
+        /// Метод, выводящий состояние заданной позиции в консоль.
+        /// </summary>
+        /// <param name="State"></param>
         public static void WriteState(IEnumerable<int> State)
         {
             foreach (int element in State)
@@ -241,7 +244,11 @@ namespace CubeAgain
             }
             _ = Console.ReadKey();
         }
-        // Метод, скрамблящий куб заданным скрамблом.
+        /// <summary>
+        /// Метод, скрамблящий куб заданным скрамблом.
+        /// </summary>
+        /// <param name="State"></param>
+        /// <param name="scrambleLength"></param>
         public static void SetScramble(IEnumerable<int> State, int scrambleLength)
         {
             SetScramble(State, scrambleLength, out _);
@@ -254,7 +261,6 @@ namespace CubeAgain
                 MakeTurn(State as IList<int>, turn);
             }
         }
-        // Локальный метод создания скрамбла заданной длины.
         private static Turns[] GetScramble(int scrLength)
         {
             Random Rnd = new Random();
@@ -293,8 +299,7 @@ namespace CubeAgain
                     }
                 }
             }
-            // Переделать данную часть. <<<<<<<<<<<<------   TODO: Выяснить как преобразовать массив int в соответствующие значения enum без цикла.
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  30.12.2020 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            // TODO: Выяснить как преобразовать массив int в соответствующие значения enum без цикла. (30.12.2020)
             // Пока что работает так.
             Turns[] res = new Turns[scrLength];
             for (int i=0; i<scrLength; i++)
@@ -303,7 +308,10 @@ namespace CubeAgain
             }
             return res;
         }
-        // Локальный метод вывода скрамбла на экран.
+        /// <summary>
+        /// Метод вывода скрамбла в консоль.
+        /// </summary>
+        /// <param name="scramble"></param>
         internal static void WriteScramble(Turns[] scramble)
         {
             Console.WriteLine("Ваш скрамбл:");

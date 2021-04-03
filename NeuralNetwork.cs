@@ -4,70 +4,76 @@ using System.Linq;
 
 namespace CubeAgain
 {
-    static class NeuralNetwork
+    internal static class NeuralNetwork
     {
         public static double Evaluation { get; private set; }
         public static double[] Policy { get; private set; }
-        internal static int NumBlocks { get; private set; }                                 // Количество блоков.
-        internal static FCL_BNL_Block[] Blocks { get; set; }                                // Промежуточные блоки сети.
-        public static FCLayer HeadPolicy { get; private set; }                              // Отдельный слой для Policy.
-        public static Neuron HeadEval { get; private set; }                                 // Отдельный нейрон для Evaluation.
+        internal static int NumInputs { get; private set; }
+        internal static int NumBlocks { get; private set; }
+        internal static FCL_BNL_Block[] Blocks { get; set; }
+        public static FCLayer HeadPolicy { get; private set; }
+        public static Neuron HeadEval { get; private set; }
         public delegate void ActivationFunction(double[] data);
-        private static ActivationFunction[] Activation;
-        public delegate void MethodContainer(Position position);            // Делегат метода создания тренировочного набора (тупла).
-        public static event MethodContainer Analyzed;                       // Событие проведения оценки новой позиции.
-        // Создание структуры нейросети.
-        public static void SetNetworkStructure()
+        private static ActivationFunction[] Activate;
+        public delegate void MethodContainer(Position position);
+        public static event MethodContainer Analyzed;
+        /// <summary>
+        /// Создание структуры нейросети.
+        /// </summary>
+        public static void SetNetworkStructure()                    // TODO: Обдумать возможность задавать параметры объектом или массивом значений.
         {
             const int nBlocks = 3;
             int[] listNeur = new int[nBlocks] { 64, 64, 64 };
-            PresetStruct(24, nBlocks, listNeur);
-            //for (int i = 0; i < nBlocks; i++)
-            //{
-            //    Activation[i] = Blocks[i].RELU;
-            //}
+            Activate = new ActivationFunction[nBlocks];
+            PresetStruct(Environment.Cells, nBlocks, listNeur);
         }
         private static void PresetStruct(int numInputs, int numBlocks, int[] numNeurons)
         {
             Random Rnd = new Random();
+            NumInputs = numInputs;
             NumBlocks = numBlocks;
-            Blocks = new FCL_BNL_Block[NumBlocks];
+            Blocks = new FCL_BNL_Block[numBlocks];
             Blocks[0] = new FCL_BNL_Block(new FCLayer(numInputs, numNeurons[0]));
-            Activation[0] += Blocks[0].RELU;
-            for (int i = 1; i < NumBlocks; i++)
+            for (int i = 1; i < numBlocks; i++)
             {
                 Blocks[i] = new FCL_BNL_Block(new FCLayer(numNeurons[i - 1], numNeurons[i]));
-                Activation[i] += Blocks[i].RELU;
+            }
+            for (int i = 0; i < numBlocks; i++)
+            {
+                Activate[i] += Blocks[i].RELU;
             }
             HeadPolicy = new FCLayer(numNeurons[numBlocks - 1], 9);
-            double[] InitWeights = new double[numInputs];
+            double[] InitWeights = new double[numNeurons[numBlocks - 1]];
             for (int j = 0; j < numInputs; j++)
             {
                 InitWeights[j] = Rnd.NextDouble();
             }
             HeadEval = new Neuron(numNeurons[numBlocks - 1], InitWeights, Rnd.NextDouble());
-            Policy = new double[numNeurons[numNeurons.Length - 1] - 1];
+            Policy = new double[Enum.GetValues(typeof(Turns)).Length];
         }
+        /// <summary>
+        /// Метод анализа заданной позиции нейросетью.
+        /// </summary>
+        /// <param name="position"></param>
         public static void Analyze(Position position)
         {
-            Blocks[0].FCL.Inputs = Preprocessing(position.State);               // Подаём на вход нулевого блока нормализованные данные.
-            for (int i = 0; i < NumBlocks; i++)                                 // Для всех блоков...
+            Blocks[0].FCL.Inputs = Preprocessing(position.State);
+            for (int i = 0; i < NumBlocks; i++)
             {
-                Blocks[i].BNL.Inputs = Blocks[i].FCL.GetOutput();               // Выходы FCL передаем на вход BNL.
-                Activation[i](Blocks[i].BNL.BatchNorm());                       // Проводим Batch Normalization и вычисляем функцию активации.
-                if (i < NumBlocks - 1)                                          // И если это не последний блок...
+                Blocks[i].BNL.Inputs = Blocks[i].FCL.GetOutputs();
+                Activate[i](Blocks[i].BNL.BatchNormalization());
+                if (i < NumBlocks - 1)
                 {
-                    Blocks[i + 1].FCL.Inputs = Blocks[i].Outputs;               // Передаём выход блока на вход следующему.
+                    Blocks[i + 1].FCL.Inputs = Blocks[i].Outputs;
                 }
             }
-            HeadPolicy.Inputs = Blocks[NumBlocks - 1].Outputs;                  // Передаём выходы последнего блока головам Evaluation и Policy.
-            Evaluation = HeadEval.GetOutput(Blocks[NumBlocks - 1].Outputs);     // Выход HeadEval это Evaluation.
-            HeadPolicy.GetOutput().CopyTo(Policy, 0);                           // Выход HeadPolicy это Policy.
-            Policy = SoftMax(Policy);                                           // Накладываем Soft-max на Policy.
+            HeadPolicy.Inputs = Blocks[NumBlocks - 1].Outputs;
+            Evaluation = HeadEval.GetOutput(Blocks[NumBlocks - 1].Outputs);
+            HeadPolicy.GetOutputs().CopyTo(Policy, 0);
+            Policy = SoftMax(Policy);
             position.Evaluation = Evaluation;
             Analyzed?.Invoke(position);
         }
-        // Функция Soft-max.
         private static double[] SoftMax(double[] SomeParams)
         {
             double sum = SomeParams.Sum(element => Math.Exp(element));
@@ -78,7 +84,6 @@ namespace CubeAgain
             }
             return result;
         }
-        // Метод нормализации входных данных.
         private static double[] Preprocessing(int[] SomeParams)
         {
             double[] result = new double[SomeParams.Length];

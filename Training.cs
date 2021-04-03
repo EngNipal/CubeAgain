@@ -9,15 +9,16 @@ namespace CubeAgain
 {
     internal static class Training
     {
-        public const double DiscountCoeff = 0.90;                                // Коэффициент для discounted reward.
+        public const double DiscountCoeff = 0.90;
 
-        internal const double EvaluationOfSolvedPosition = 100;
+        internal const double EvaluationOfSolvedPosition = 100;                 // TODO: Ещё раз обдумать этот параметр (18.01.2021).
         internal const double CorrectionIfPositionRepeats = -1;
         internal const int MaxNodes = 1024;
 
         private const double LearningRate = 0.01;
-        internal static Dictionary<Position, TrainTuple> DataBase { get; }
-        private static double[][][] NetWeights { get; set; }                    // 1 - количество блоков, 2 - нейроны в блоке, 3 - веса конкретного нейрона.
+        private static Dictionary<Position, TrainTuple> DataBase = new Dictionary<Position, TrainTuple>();
+        // 1 - количество блоков, 2 - нейроны в блоке, 3 - веса конкретного нейрона.
+        private static double[][][] NetWeights { get; set; }                    
         public static double[][] PolicyHeadWeights { get; private set; }
         public static double[] EvaluationHeadWeights { get; private set; }
         /// <summary>
@@ -40,16 +41,18 @@ namespace CubeAgain
             return result;
         }
         /// <summary>
-        /// Запоминание текущих весов нейросети.
+        /// Запоминает текущие веса нейросети.
         /// </summary>
         internal static void SaveNetWeights()
         {
             NetWeights = new double[NumBlocks][][];
             for (int i = 0; i < NumBlocks; i++)
             {
+                NetWeights[i] = new double[Blocks[i].FCL.NumNeurons][];
                 for (int j = 0; j < Blocks[i].FCL.NumNeurons; j++)
                 {
-                    int max = Blocks[i].FCL.Neurons[j].InputQuantity;
+                    int max = Blocks[i].FCL.NumInputs;
+                    NetWeights[i][j] = new double[max + 1];
                     Blocks[i].FCL.Neurons[j].Weights.CopyTo(NetWeights[i][j], 0);
                     NetWeights[i][j][max] = Blocks[i].FCL.Neurons[j].Bias;
                 }
@@ -57,15 +60,32 @@ namespace CubeAgain
             PolicyHeadWeights = new double[HeadPolicy.NumNeurons][];
             for (int i = 0; i < HeadPolicy.NumNeurons; i++)
             {
+                int max = HeadPolicy.NumInputs;
+                PolicyHeadWeights[i] = new double[max + 1];
                 HeadPolicy.Neurons[i].Weights.CopyTo(PolicyHeadWeights[i], 0);
-                int max = HeadPolicy.Neurons[i].InputQuantity;
                 PolicyHeadWeights[i][max] = HeadPolicy.Neurons[i].Bias;
             }
-            EvaluationHeadWeights = new double[HeadEval.InputQuantity];
+            EvaluationHeadWeights = new double[HeadEval.InputQuantity + 1];
             HeadEval.Weights.CopyTo(EvaluationHeadWeights, 0);
             EvaluationHeadWeights[HeadEval.InputQuantity] = HeadEval.Bias;
         }
-        // Метод, добавляющий новый тупл в базу.
+        /// <summary>
+        /// Получение тупла по позиции
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns>Новый или существующий тупл, согласно позиции</returns>
+        public static TrainTuple GetTupleByPos(Position position)
+        {
+            if (!DataBase.ContainsKey(position))
+            {
+                AddTuple(position);
+            }
+            return DataBase[position];
+        }
+        /// <summary>
+        /// Добавляет новый тупл в базу.
+        /// </summary>
+        /// <param name="position"></param>
         public static void AddTuple(Position position)
         {
             // Код ниже работает правильно. Передача чисел командой "CopyTo" проверена в "песочнице".
@@ -80,7 +100,7 @@ namespace CubeAgain
                 for (int i = 0; i < Blocks.Length; i++)
                 {
                     Blocks[i].Outputs.CopyTo(newTuple.InternalNetOutputs[i], 0);
-                    newTuple.StDev[i] = Blocks[i].BNL.StandDev;
+                    newTuple.StDev[i] = Blocks[i].BNL.StandDeviation;
                 }
                 Policy.CopyTo(newTuple.SourcePolicy, 0);
                 newTuple.Score = position.Evaluation;
@@ -90,7 +110,7 @@ namespace CubeAgain
         }
         // Метод корректировки весов нейронов слоя.
         // !!!!! Нужно очень грамотно собрать вектор градиента !!!!!
-        // TODO: Определиться с корректировкой весов.
+        // TODO: Определиться с корректировкой весов. Доработать метод.
         internal static void CorrectWeights(double[] gradfrom, FCLayer layer)
         {
             int i = 0;
@@ -107,15 +127,16 @@ namespace CubeAgain
                 // Для функции RELU.
                 for (int j = 0; j < neuron.InputQuantity; j++)
                 {
-                    if (neuron.Output >= 0)
+                    if (neuron.GetOutput() >= 0)
                     {
-                        neuron.Weights[j] -= layer.Inputs[j] * neuron.Output * gradfrom[i] * LearningRate;
+                        neuron.Weights[j] -= layer.Inputs[j] * neuron.GetOutput() * gradfrom[i] * LearningRate;
                     }
                 }
                 i++;
             }
         }
-        public static double[] BatchNormDerivation(double[] inputs)                 // TODO: Доработать метод BatchNormDerivation (17.01.2021)
+        // TODO: Доработать метод BatchNormDerivation (17.01.2021)
+        public static double[] BatchNormDerivation(double[] inputs)
         {
             double[] result = new double[inputs.Length];
 

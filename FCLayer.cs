@@ -17,9 +17,7 @@ namespace CubeAgain
             SetRegsum();
         }
         private readonly Random Rnd = new Random();
-        // Количество входов слоя
         public int NumInputs { get; set; }
-        // Значения входных параметров.
         private double[] inputs;
         public double[] Inputs
         {
@@ -34,13 +32,10 @@ namespace CubeAgain
             }
         }
         public double[] Outputs { get; private set; }
-        // Сумма квадратов Weights и Bias для всех нейронов слоя - сумма регуляризации.
         public double RegSum { get; private set; }
-        // Количество нейронов слоя
         public int NumNeurons { get; private set; }
-        // Массив нейронов.
         public Neuron[] Neurons;
-        public double[] GetOutput()
+        public double[] GetOutputs()
         {
             for(int i = 0; i < NumNeurons; i++)
             {

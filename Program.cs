@@ -14,57 +14,54 @@ namespace CubeAgain
         {
             // Общая логика:
             // 0. Задали позицию запутыванием.
-            // 1. Получили позицию.
-            // 2. Оценили сетью.
-            // 3. Записали оценку сети в обучающий сет.
-            // 4. Походили по дереву - получили уточнённые оценки.
-            // 5. Записали уточнённые оценки в обучающий сет.
-            // 6. Сделали ход - получили новую позицию.
-            // 7. Повторили шаги 2-6 пока не придём к выигрышу.
-            // 8. На собранном сете провели корректировку весов нейросети.
-            // 9. Повторили шаги 0-8 пока не научимся.
+            // 1. Оценили позицию сетью.
+            // 2. Записали оценку сети в обучающий сет.
+            // 3. Походили по дереву - получили уточнённые оценки.
+            // 4. Записали уточнённые оценки в обучающий сет.
+            // 5. Сделали ход - получили новую позицию.
+            // 6. Повторили шаги 1-5 пока не придём к выигрышу.
+            // 7. На собранном сете провели корректировку весов нейросети.
+            // 8. Повторили шаги 0-7 пока не научимся.
 
-            IEnumerable<int> CurrState = SetSolved();                        // Устанавливаем решённую позицию в CurrState.
-            SetNetworkStructure();                              // Задаём структуру нейронной сети.
-            Training.SaveNetWeights();                          // Запись текущих весов NN в тренировочную базу.
-            Analyzed += Training.AddTuple;                      // Подписка тренировочной базы на анализ позиций.
+            IEnumerable<int> CurrState = SetSolved();
+            SetNetworkStructure();
+            Training.SaveNetWeights();
+            Analyzed += Training.AddTuple;
             Random Rnd = new Random();
-            SetScramble(CurrState, Rnd.Next(1, 16), out Turns[] NewScramble);             // Задаём скрамбл длиной до 15 ходов и запутываем куб.
-            WriteScramble(NewScramble);                                                 // Выводим скрамбл в консоль
-            Position CurrentPos = new Position(CurrState);                // Текущая позиция - это запутанная CurrState.
-            Node CurrentNode = new Node(CurrentPos);                    // Текущий узел.
-            Path GamePath = new Path(CurrentNode);                      // Список ходов, по которым идёт игра.
-            Graph MainGraph = new Graph();                           // Начинаем граф.
-            const int TrainDataSetVolume = 128;                              // Объём тренировочной базы данных!!!!!!!!!!!!!!!
-            TrainTuple[] MiniBatch = new TrainTuple[TrainDataSetVolume];     // Тренировочная база данных.
-            for (int Tau = 0; Tau < TrainDataSetVolume; Tau++)               // Набираем минибатч...
+            SetScramble(CurrState, Rnd.Next(1, 16), out Turns[] NewScramble);
+            WriteScramble(NewScramble);
+            Position CurrentPos = new Position(CurrState);
+            Node CurrentNode = new Node(CurrentPos);
+            Path GamePath = new Path(CurrentNode);
+            Graph MainGraph = new Graph();
+            const int TrainDataSetVolume = 128;
+            TrainTuple[] MiniBatch = new TrainTuple[TrainDataSetVolume];
+            for (int Tau = 0; Tau < TrainDataSetVolume; Tau++)
             {
-                double[] ImprovedPolicy = MonteCarloTreeSearch.GetProbDistrib(CurrentNode, MainGraph);    // Улучшенная оценка ходов, на основе MCTS.
-                TrainTuple CurrentTuple = Training.DataBase[CurrentPos];                        // В словаре находим тупл, соответствующий CurrentPos.
-                ImprovedPolicy.CopyTo(CurrentTuple.ImprovedPolicy, 0);                          // Дописываем туда улучшенную оценку. Другие параметры были записаны ранее,
-                                                                                                // при создании нового узла в графе. Смотри класс Graph.
-                CurrentTuple.PathLength = GamePath.Length;                                      // Дописываем в тупл длину пути.
-                MiniBatch[Tau] = CurrentTuple;                                                  // Сохраняем теперь уже полноценный тупл в базу.
-                Turns BestTurn = Training.Argmax(ImprovedPolicy);                               // Нашли наилучший ход.
-                GamePath.AddStep(CurrentNode.Steps[BestTurn]);                                  // Добавили шаг в путь игры.
-                                                                                                // Сделали ход, согласно максимуму из ImprovedPolicy.
-                CurrentPos = CurrentPos.PosAfterTurn(BestTurn);                                 // Назначили новую позицию текущей.
+                double[] ImprovedPolicy = GetProbDistrib(CurrentNode, MainGraph);
+                TrainTuple CurrentTuple = Training.GetTupleByPos(CurrentPos);
+                ImprovedPolicy.CopyTo(CurrentTuple.ImprovedPolicy, 0);              // TODO: Разобраться почему приходится отдельно задавать ImprovedPolicy для тупла
+                CurrentTuple.PathLength = GamePath.Length;                          // TODO: Разобраться почему приходится отдельно задавать длину пути для тупла.
+                MiniBatch[Tau] = CurrentTuple;
+                Turns BestTurn = Training.Argmax(ImprovedPolicy);
+                GamePath.AddStep(CurrentNode.Steps[BestTurn]);
+                CurrentPos = CurrentPos.PosAfterTurn(BestTurn);
                 CurrentNode = MainGraph.NodeFromPosition(CurrentPos);
-                if (Solved.Equals(CurrentPos))                                          // Если текущая позиция - решённая...
+                if (Solved.Equals(CurrentPos))
                 {
-                    CurrentTuple.PathLength++;                                          // Увеличиваем длину пути в тупле.
-                    CurrentTuple.Reward = 1;                                            // Назначаем Reward.
-                                                                                        // TODO: определиться с Reward-ом.
+                    CurrentTuple.PathLength++;
+                    CurrentTuple.Reward = 1;                                        // TODO: определиться с Reward-ом.
                     CurrState = SetSolved();
-                    SetScramble(CurrState, Rnd.Next(1, 16));                              // Задаём новый скрамбл, запутываем им текущую позицию.
-                    CurrentPos = new Position(CurrState);                                 // Текущая позиция - это запутанная CurrState.
+                    SetScramble(CurrState, Rnd.Next(1, 16));
+                    CurrentPos = new Position(CurrState);
                     Analyze(CurrentPos);
-                    CurrentNode = MainGraph.NodeFromPosition(CurrentPos);            // Получаем узел по позиции.
-                    GamePath.Clear();                                                   // Очищаем путь игры.
-                    GamePath.Begin = CurrentNode;                                       // Начинаем новый путь с текущего узла.
+                    CurrentNode = MainGraph.NodeFromPosition(CurrentPos);
+                    GamePath.Clear();
+                    GamePath.Begin = CurrentNode;
                 }
+                
             }
-            // TODO: Дописать этот блок!!!!!
+            #region TODO: Finish that block
             // *** Корректировка весов ***
             const double RegulCoeff = 0.001;                                            // Гиперпараметр регуляризации.
             // Подсчитываем Лосс-функцию.
@@ -88,8 +85,54 @@ namespace CubeAgain
                     //Blocks[i]
                 }
             }
-
+            #endregion
             WriteState(CurrState);
+        }
+        private static double[] GetProbDistrib(Node CurrentNode, Graph graph)
+        {
+            Path SearchPath = new Path(CurrentNode);
+            for (int i = 0; i < Training.MaxNodes; i++)
+            {
+                if (CurrentNode.WasVisited)
+                {
+                    Turns BestTurn = CurrentNode.GetBestTurn();
+                    SearchPath.AddStep(CurrentNode.Steps[BestTurn]);
+                    CurrentNode = CurrentNode.Steps[BestTurn].Node;
+                }
+                else
+                {
+                    CurrentNode.WasVisited = true;
+                    ExpandNode(CurrentNode, graph, SearchPath);
+                    SearchPath.BackPropagate();
+                }
+            }
+            double[] result = new double[HeadPolicy.NumNeurons];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = CurrentNode.Steps[(Turns)i].Move.Visit;                     // TODO: Уточнить как именно выбирается ход.
+            }
+            return result;
+        }
+        private static void ExpandNode(Node NewNode, Graph graph, Path path)
+        {
+            for (Turns turn = Turns.R; turn <= Turns.F2; turn++)
+            {
+                Position childPos = NewNode.Position.PosAfterTurn(turn);
+                Node childNode = graph.NodeFromPosition(childPos, out bool NodeExists);
+                if (NodeExists && path.Contains(childPos))  // Если сделан возвратный ход или произошло зацикливание...
+                {
+                    NewNode.WinRateCorrection(turn, Training.CorrectionIfPositionRepeats);
+                }
+                else // Такого узла ещё не было.
+                {
+                    double moveWinRate = Solved.Equals(childPos)
+                        ? Training.EvaluationOfSolvedPosition
+                        : childPos.Evaluation; // * Math.Pow(Training.DiscountCoeff, path.Length);
+                    Move currMove = new Move(Policy[(int)turn], 0, moveWinRate);
+                    Step currStep = new Step(currMove, childNode);
+                    NewNode.AddStep(turn, currStep);
+                }
+            }
         }
     }
 }
