@@ -64,6 +64,7 @@
   <ItemGroup>
     <Compile Include="BNLayer.cs" />
     <Compile Include="ConvLayer.cs" />
+    <Compile Include="Current.cs" />
     <Compile Include="FCLayer.cs" />
     <Compile Include="FCL_BNL_Block.cs" />
     <Compile Include="Graph.cs" />

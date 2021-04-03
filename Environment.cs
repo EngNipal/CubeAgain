@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace CubeAgain
 {
@@ -22,7 +23,7 @@ namespace CubeAgain
         /// <param name="State">состояние позиции</param>
         /// <param name="Turn">выполняемый поворот</param>
         /// <returns></returns>
-        public static void MakeTurn(int[] State, Turns Turn)
+        public static void MakeTurn(IList<int> State, Turns Turn)
         {
             int Buffer;
             switch (Turn)
@@ -232,7 +233,7 @@ namespace CubeAgain
             return new int[] { 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6 };
         }
         // Метод, выводящий состояние заданной позиции на экран.
-        public static void WriteState(int[] State)
+        public static void WriteState(IEnumerable<int> State)
         {
             foreach (int element in State)
             {
@@ -241,16 +242,16 @@ namespace CubeAgain
             _ = Console.ReadKey();
         }
         // Метод, скрамблящий куб заданным скрамблом.
-        public static void SetScramble(int[] State, int scrambleLength)
+        public static void SetScramble(IEnumerable<int> State, int scrambleLength)
         {
             SetScramble(State, scrambleLength, out _);
         }
-        public static void SetScramble(int[] State, int scrambleLength, out Turns[] scramble)
+        public static void SetScramble(IEnumerable<int> State, int scrambleLength, out Turns[] scramble)
         {
             scramble = GetScramble(scrambleLength);
-            foreach (Turns element in scramble)
+            foreach (Turns turn in scramble)
             {
-                MakeTurn(State, element);
+                MakeTurn(State as IList<int>, turn);
             }
         }
         // Локальный метод создания скрамбла заданной длины.

@@ -13,22 +13,14 @@ namespace CubeAgain
             inputs = new double[numInputs];
             Outputs = new double[numNeurons];
             Neurons = new Neuron[numNeurons];
-            double[] InitWeights = new double[numInputs];
-            for(int i = 0; i < numNeurons; i++)
-            {
-                for (int j = 0; j < numInputs; j++)
-                {
-                    InitWeights[j] = Rnd.NextDouble();
-                }
-                Neurons[i] = new Neuron(numInputs, InitWeights, Rnd.NextDouble());
-                RegSum = InitWeights.Sum(elem => elem * elem) + (Neurons[i].Bias * Neurons[i].Bias);
-            }
+            SetWeights(numInputs);
+            SetRegsum();
         }
         private readonly Random Rnd = new Random();
         // Количество входов слоя
         public int NumInputs { get; set; }
         // Значения входных параметров.
-        private readonly double[] inputs;
+        private double[] inputs;
         public double[] Inputs
         {
             get { return inputs; }
@@ -47,7 +39,7 @@ namespace CubeAgain
         // Количество нейронов слоя
         public int NumNeurons { get; private set; }
         // Массив нейронов.
-        internal Neuron[] Neurons;
+        public Neuron[] Neurons;
         public double[] GetOutput()
         {
             for(int i = 0; i < NumNeurons; i++)
@@ -55,6 +47,25 @@ namespace CubeAgain
                 Outputs[i] = Neurons[i].GetOutput(Inputs);
             }
             return Outputs;
+        }
+        private void SetWeights(int numInputs)
+        {
+            double[] InitWeights = new double[numInputs];
+            for (int i = 0; i < NumNeurons; i++)
+            {
+                for (int j = 0; j < NumInputs; j++)
+                {
+                    InitWeights[j] = Rnd.NextDouble();
+                }
+                Neurons[i] = new Neuron(NumInputs, InitWeights, Rnd.NextDouble());
+            }
+        }
+        private void SetRegsum()
+        {
+            for (int i = 0; i < NumNeurons; i++)
+            {
+                RegSum = Neurons[i].Weights.Sum(elem => elem * elem) + (Neurons[i].Bias * Neurons[i].Bias);
+            }
         }
     }
 }

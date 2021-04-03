@@ -15,6 +15,6 @@ namespace CubeAgain
         public double[] ImprovedPolicy { get; set; }                                    // Оценка позиции после MCTS.
         public double Score { get; set; }                                               // Оценка позиции сетью.
         public double Reward { get; set; }                                              // Главная плюшка, получаемая от среды.
-        public int InstPathLength { get; set; }                                         // Длина пути в конкретный момент.
+        public int PathLength { get; set; }                                             // Длина пути в конкретный момент.
     }
 }

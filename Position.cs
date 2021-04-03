@@ -12,10 +12,11 @@ namespace CubeAgain
         public double Evaluation { get; set; }
         // Хэшкод, определяющий уникальность позиции.
         public int HashCode { get; }
+        public bool Analyzed;
         public Position(IEnumerable<int> state)
         {
             State = state?.ToArray() ?? Array.Empty<int>();
-            HashCode = -1319591066;
+            HashCode = -1073676287;                             // Десятизначное простое число. Здесь - простое число Кэрола.
             foreach (int item in State)
             {
                 HashCode = ((HashCode << 13) | (int)((uint)HashCode >> 17)) ^ item;

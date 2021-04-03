@@ -5,11 +5,10 @@ namespace CubeAgain
 {
     class Path
     {
-        // TODO: Доработать этот класс (31.12.2020).
         public Node Begin { get; set; }
         public int Length { get; private set; }
         public List<Step> Steps { get; private set; }
-        public Path (Node node)
+        public Path(Node node)
         {
             Begin = node;
             Length = 1;
@@ -46,6 +45,11 @@ namespace CubeAgain
                 Steps[i].Move.Visit++;
                 Steps[i].Move.WinRate += Steps[i].Node.Position.Evaluation;
             }
+        }
+        public void Clear()
+        {
+            Steps.Clear();
+            Begin = null;
         }
     }
 }

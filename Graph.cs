@@ -1,20 +1,17 @@
 ﻿using System.Collections.Generic;
-using static CubeAgain.NeuralNetwork;
 
 namespace CubeAgain
 {
     public class Graph
     {
-        public Node Solved { get; }
-        public delegate void MethodContainer(Position position);            // Делегат метода создания тренировочного набора (тупла).
-        public static event MethodContainer Analyzed;                       // Событие проведения оценки новой позиции.
+        public Node Solved { get; } // TODO: Перенести в класс узла.
         public Graph()
         {
             Solved = NodeFromPosition(Environment.Solved);
             Solved.WasVisited = false;
         }
         // Словарь содержащий ссылки на узлы по их позициям
-        private readonly Dictionary<Position, Node> PositionsNodes = new Dictionary<Position, Node>();
+        internal static readonly Dictionary<Position, Node> PositionsNodes = new Dictionary<Position, Node>();
 
         ///  Метод получения узла в дереве по позиции
         /// <param name="position">Позиция для узла</param>
@@ -34,14 +31,12 @@ namespace CubeAgain
             }
             else
             {
-                Analyze(position.State);
-                position.Evaluation = Evaluation;
+                NeuralNetwork.Analyze(position);
                 result = new Node(position);
                 PositionsNodes.Add(position, result);
-                Analyzed?.Invoke(position);
                 for (Turns turn = Turns.R; turn <= Turns.F2; turn++)
                 {
-                    result.Steps[turn].Move.Policy = Policy[(int)turn];
+                    result.Steps[turn].Move.Policy = NeuralNetwork.Policy[(int)turn];
                 }
             }
             return result;

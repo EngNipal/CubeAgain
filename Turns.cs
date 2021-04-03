@@ -2,8 +2,17 @@
 {
     public enum Turns
     {
-        R, Rp, R2, U, Up, U2, F, Fp, F2
+        R,
+        Rp,
+        R2,
+        U,
+        Up,
+        U2,
+        F,
+        Fp,
+        F2
     }
+    // Удалённые методы.
     // Метод, организующий структуру нейросети.
     //public static void UserStruct()
     //{

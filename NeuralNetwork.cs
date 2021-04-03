@@ -13,13 +13,19 @@ namespace CubeAgain
         public static FCLayer HeadPolicy { get; private set; }                              // Отдельный слой для Policy.
         public static Neuron HeadEval { get; private set; }                                 // Отдельный нейрон для Evaluation.
         public delegate void ActivationFunction(double[] data);
-        private static readonly ActivationFunction[] Activation;
+        private static ActivationFunction[] Activation;
+        public delegate void MethodContainer(Position position);            // Делегат метода создания тренировочного набора (тупла).
+        public static event MethodContainer Analyzed;                       // Событие проведения оценки новой позиции.
         // Создание структуры нейросети.
         public static void SetNetworkStructure()
         {
             const int nBlocks = 3;
             int[] listNeur = new int[nBlocks] { 64, 64, 64 };
             PresetStruct(24, nBlocks, listNeur);
+            //for (int i = 0; i < nBlocks; i++)
+            //{
+            //    Activation[i] = Blocks[i].RELU;
+            //}
         }
         private static void PresetStruct(int numInputs, int numBlocks, int[] numNeurons)
         {
@@ -42,10 +48,9 @@ namespace CubeAgain
             HeadEval = new Neuron(numNeurons[numBlocks - 1], InitWeights, Rnd.NextDouble());
             Policy = new double[numNeurons[numNeurons.Length - 1] - 1];
         }
-        // Непосредственный анализатор позиции, выдающий Policy как вектор и Evaluation как одно число.
-        public static void Analyze(int[] State)
+        public static void Analyze(Position position)
         {
-            Blocks[0].FCL.Inputs = Preprocessing(State);                        // Подаём на вход первого блока нормализованные данные.
+            Blocks[0].FCL.Inputs = Preprocessing(position.State);               // Подаём на вход нулевого блока нормализованные данные.
             for (int i = 0; i < NumBlocks; i++)                                 // Для всех блоков...
             {
                 Blocks[i].BNL.Inputs = Blocks[i].FCL.GetOutput();               // Выходы FCL передаем на вход BNL.
@@ -59,6 +64,8 @@ namespace CubeAgain
             Evaluation = HeadEval.GetOutput(Blocks[NumBlocks - 1].Outputs);     // Выход HeadEval это Evaluation.
             HeadPolicy.GetOutput().CopyTo(Policy, 0);                           // Выход HeadPolicy это Policy.
             Policy = SoftMax(Policy);                                           // Накладываем Soft-max на Policy.
+            position.Evaluation = Evaluation;
+            Analyzed?.Invoke(position);
         }
         // Функция Soft-max.
         private static double[] SoftMax(double[] SomeParams)

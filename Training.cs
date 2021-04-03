@@ -90,6 +90,7 @@ namespace CubeAgain
         }
         // Метод корректировки весов нейронов слоя.
         // !!!!! Нужно очень грамотно собрать вектор градиента !!!!!
+        // TODO: Определиться с корректировкой весов.
         internal static void CorrectWeights(double[] gradfrom, FCLayer layer)
         {
             int i = 0;
@@ -114,7 +115,7 @@ namespace CubeAgain
                 i++;
             }
         }
-        public static double[] BatchNormDerivation(double[] inputs)                 // TODO: Доработать метод (17.01.2021)
+        public static double[] BatchNormDerivation(double[] inputs)                 // TODO: Доработать метод BatchNormDerivation (17.01.2021)
         {
             double[] result = new double[inputs.Length];
 
