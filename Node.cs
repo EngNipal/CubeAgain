@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 
 namespace CubeAgain
@@ -13,7 +12,7 @@ namespace CubeAgain
         public Node(Position position)
         {
             Position = position ?? throw new ArgumentNullException(nameof(position));
-            Steps = Enum.GetValues(typeof(Turns)).Cast<Turns>().ToDictionary(val => val, val => new Step(new Move(), position));
+            Steps = Enum.GetValues(typeof(Turns)).Cast<Turns>().ToDictionary(val => val, val => new Step(new Move(), null));
             WasVisited = false;
         }
         #region НЕ УДАЛЯТЬ ЭТОТ ЗАКОММЕНТИРОВАННЫЙ БЛОК!
@@ -34,7 +33,7 @@ namespace CubeAgain
         /// Метод, выбирающий лучший ход.
         /// </summary>
         /// <returns></returns>
-        public Turns GetBestTurn()
+        public Turns GetBestTurn()  
         {
             Turns BestTurn = Turns.R;
             double Max = double.MinValue;

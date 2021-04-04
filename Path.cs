@@ -39,9 +39,9 @@ namespace CubeAgain
             }
             foreach (Step step in Steps)
             {
-                if (step.NextPos.Equals(position))
+                if (step.NextNode.Equals(position))
                 {
-                    return  true;
+                    return true;
                 }
             }
             return false;
@@ -57,12 +57,12 @@ namespace CubeAgain
                 for (int i = Length - 1; i >=0; --i)
                 {
                     Steps[i].Move.Visit++;
-                    Steps[i].Move.WinRate += Steps[i].NextPos.Evaluation;
+                    Steps[i].Move.WinRate += Steps[i].NextNode.Position.Evaluation;
                 }
             }
         }
         /// <summary>
-        /// Очищает путь.
+        /// Очищает путь. Не удаляет стартовый узел.
         /// </summary>
         public void Clear()
         {

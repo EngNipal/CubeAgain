@@ -96,7 +96,7 @@ namespace CubeAgain
                 {
                     Turns BestTurn = currentNode.GetBestTurn();
                     SearchPath.AddStep(currentNode.Steps[BestTurn]);
-                    currentNode = graph.NodeFromPosition(currentNode.Steps[BestTurn].NextPos);
+                    currentNode = graph.NodeFromPosition(currentNode.Steps[BestTurn].NextNode.Position);
                 }
                 else
                 {
@@ -128,7 +128,7 @@ namespace CubeAgain
                         ? Training.EvaluationOfSolvedPosition
                         : childPos.Evaluation; // * Math.Pow(Training.DiscountCoeff, path.Length);
                     Move currMove = new Move(Policy[(int)turn], 0, moveWinRate);
-                    Step currStep = new Step(currMove, childPos);
+                    Step currStep = new Step(currMove, childNode);
                     NewNode.AddStep(turn, currStep);
                 }
             }
