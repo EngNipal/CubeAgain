@@ -3,11 +3,12 @@
     public class Step
     {
         public Move Move { get; set; }
-        public Position NextPos { get; set; }
-        public Step(Move move, Position nextpos)
+        public Node Node { get; set; }
+
+        public Step(Move move, Node node)
         {
             Move = move;
-            NextPos = nextpos;
+            Node = node;
         }
     }
 }

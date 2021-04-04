@@ -12,7 +12,7 @@ namespace CubeAgain
         public const double DiscountCoeff = 0.90;
         public const double LearningRate = 0.01;
 
-        internal const double EvaluationOfSolvedPosition = 100;                 // TODO: Ещё раз обдумать этот параметр (2021-01-18).
+        internal const double EvaluationOfSolvedPosition = 100;                 // TODO: Ещё раз обдумать этот параметр (18.01.2021).
         internal const double CorrectionIfPositionRepeats = -1;
         internal const int MaxNodes = 1024;
 
@@ -109,7 +109,7 @@ namespace CubeAgain
                 DataBase.Add(position, newTuple);
             }
         }
-        // TODO: Доработать метод BatchNormDerivation (2021-01-17).
+        // TODO: Доработать метод BatchNormDerivation (17.01.2021)
         public static double[] BatchNormDerivation(double[] inputs)
         {
             double[] result = new double[inputs.Length];

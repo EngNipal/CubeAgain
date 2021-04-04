@@ -5,15 +5,17 @@ using System.Linq;
 
 namespace CubeAgain
 {
-    public class Node
+    public class Node// : IEquatable<Node>
     {
-        public readonly Dictionary<Turns, Step> Steps = new Dictionary<Turns, Step>();
+        private Dictionary<Turns, Step> steps { get; set; }
+        public ImmutableDictionary<Turns, Step> Steps => steps.ToImmutableDictionary();
         public bool WasVisited { get; set; }
         public Position Position { get; }
-        public Node(Position position)
+        public Node(Position position)      // TODO: Обдумать как быть с закрытым словарём, Step-ами и обновлением пути - BackPropagation (2021-04-03)
         {
             Position = position ?? throw new ArgumentNullException(nameof(position));
-            Steps = Enum.GetValues(typeof(Turns)).Cast<Turns>().ToDictionary(val => val, val => new Step(new Move(), position));
+            steps = Enum.GetValues(typeof(Turns)).Cast<Turns>().ToDictionary(val => val, val => new Step(new Move(), null));
+            ImmutableDictionary<Turns, Step> Steps = steps.ToImmutableDictionary();
             WasVisited = false;
         }
         #region НЕ УДАЛЯТЬ ЭТОТ ЗАКОММЕНТИРОВАННЫЙ БЛОК!
@@ -28,7 +30,7 @@ namespace CubeAgain
         /// <param name="step"></param>
         public void AddStep(Turns turn, Step step)
         {
-            Steps[turn] = step;
+            steps[turn] = step;
         }
         /// <summary>
         /// Метод, выбирающий лучший ход.
@@ -55,18 +57,18 @@ namespace CubeAgain
         }
         public void SetMovesPolicy()
         {
-            foreach (Turns turn in Steps.Keys)
+            foreach (Turns turn in steps.Keys)
             {
-                Steps[turn].Move.Policy = NeuralNetwork.Policy[(int)turn];
+                steps[turn].Move.Policy = NeuralNetwork.Policy[(int)turn];
             }
         }
         public void WinRateCorrection(Turns turn, double correction)
         {
-            Steps[turn].Move.WinRate += correction;
+            steps[turn].Move.WinRate += correction;
         }
         public void VisitCorrection(Turns turn, int correction)
         {
-            Steps[turn].Move.Visit += correction;
+            steps[turn].Move.Visit += correction;
         }
     }
 }

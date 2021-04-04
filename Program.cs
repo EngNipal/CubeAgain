@@ -57,7 +57,7 @@ namespace CubeAgain
                     Analyze(CurrentPos);
                     CurrentNode = MainGraph.NodeFromPosition(CurrentPos);
                     GamePath.Clear();
-                    GamePath.Start = CurrentNode;
+                    GamePath.Begin = CurrentNode;
                 }
             }
             #region TODO: Finish that block
@@ -87,28 +87,28 @@ namespace CubeAgain
             #endregion
             WriteState(CurrState);
         }
-        private static double[] GetProbDistrib(Node currentNode, Graph graph)
+        private static double[] GetProbDistrib(Node CurrentNode, Graph graph)
         {
-            Path SearchPath = new Path(currentNode);
+            Path SearchPath = new Path(CurrentNode);
             for (int i = 0; i < Training.MaxNodes; i++)
             {
-                if (currentNode.WasVisited)
+                if (CurrentNode.WasVisited)
                 {
-                    Turns BestTurn = currentNode.GetBestTurn();
-                    SearchPath.AddStep(currentNode.Steps[BestTurn]);
-                    currentNode = graph.NodeFromPosition(currentNode.Steps[BestTurn].NextPos);
+                    Turns BestTurn = CurrentNode.GetBestTurn();
+                    SearchPath.AddStep(CurrentNode.Steps[BestTurn]);
+                    CurrentNode = CurrentNode.Steps[BestTurn].Node;
                 }
                 else
                 {
-                    currentNode.WasVisited = true;
-                    ExpandNode(currentNode, graph, SearchPath);
+                    CurrentNode.WasVisited = true;
+                    ExpandNode(CurrentNode, graph, SearchPath);
                     SearchPath.BackPropagate();
                 }
             }
             double[] result = new double[HeadPolicy.NumNeurons];
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = currentNode.Steps[(Turns)i].Move.Visit;                     // TODO: Уточнить как именно выбирается ход.
+                result[i] = CurrentNode.Steps[(Turns)i].Move.Visit;                     // TODO: Уточнить как именно выбирается ход.
             }
             return result;
         }
@@ -128,7 +128,7 @@ namespace CubeAgain
                         ? Training.EvaluationOfSolvedPosition
                         : childPos.Evaluation; // * Math.Pow(Training.DiscountCoeff, path.Length);
                     Move currMove = new Move(Policy[(int)turn], 0, moveWinRate);
-                    Step currStep = new Step(currMove, childPos);
+                    Step currStep = new Step(currMove, childNode);
                     NewNode.AddStep(turn, currStep);
                 }
             }

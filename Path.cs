@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace CubeAgain
 {
-    public class Path
+    class Path
     {
-        public Node Start;
-        public int Length => Steps.Count();
+        public Node Begin { get; set; }
+        public int Length { get; private set; }
         public List<Step> Steps { get; private set; }
-        public Path(Node start)
+        public Path(Node node)
         {
+            Begin = node;
+            Length = 0;
             Steps = new List<Step>();
-            Start = start;
         }
         public void AddStep(Step step)
         {
@@ -23,6 +23,7 @@ namespace CubeAgain
             else
             {
                 Steps.Add(step);
+                Length++;
             }
         }
         /// <summary>
@@ -33,13 +34,9 @@ namespace CubeAgain
         /// <see langword="false"/> - в ином случае</returns>
         public bool Contains(Position position)
         {
-            if (Start.Position.Equals(position))
-            {
-                return true;
-            }
             foreach (Step step in Steps)
             {
-                if (step.NextPos.Equals(position))
+                if (step.Node.Position.Equals(position))
                 {
                     return  true;
                 }
@@ -49,24 +46,24 @@ namespace CubeAgain
         /// <summary>
         /// Обновляет W и N для рёбер, по которым прошли.
         /// </summary>
-        // Вызывается 128000 раз.
-        public void BackPropagate()
+        public void BackPropagate() // TODO: См тудушку в классе Node.
         {
             if (Length > 0)
             {
-                for (int i = Length - 1; i >=0; --i)
+                for (int i = Length - 2; i >= 0; i--)
                 {
                     Steps[i].Move.Visit++;
-                    Steps[i].Move.WinRate += Steps[i].NextPos.Evaluation;
+                    Steps[i].Move.WinRate += Steps[i].Node.Position.Evaluation;
                 }
             }
         }
         /// <summary>
-        /// Очищает путь.
+        /// Очищает путь и обнуляет начальный узел.
         /// </summary>
         public void Clear()
         {
             Steps.Clear();
+            Begin = null;
         }
     }
 }
