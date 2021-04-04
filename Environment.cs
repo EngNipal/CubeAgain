@@ -10,7 +10,7 @@ namespace CubeAgain
         public const int Cells = 24;
         public static Position Solved { get; } = new Position(SetSolved());
 
-        // TODO (2020-12-27): Написать метод поворачивающий кубик в пространстве,
+        // TODO: Написать метод поворачивающий кубик в пространстве, (2020-12-27)
         // Если его левый задний кубик не на своём месте.
 
         public static void Rotate(int[] State)
@@ -299,7 +299,7 @@ namespace CubeAgain
                     }
                 }
             }
-            // TODO: Выяснить как преобразовать массив int в соответствующие значения enum без цикла. (30.12.2020)
+            // TODO: Выяснить как преобразовать массив int в соответствующие значения Enum без цикла. (2020-12-30)
             // Пока что работает так.
             Turns[] res = new Turns[scrLength];
             for (int i=0; i<scrLength; i++)

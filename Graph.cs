@@ -4,7 +4,7 @@ namespace CubeAgain
 {
     public class Graph
     {
-        public Node Solved { get; } // TODO: Перенести в класс узла.
+        public Node Solved { get; } // TODO: Consider to delete (2021-04-04).
         public Graph()
         {
             Solved = NodeFromPosition(Environment.Solved);
