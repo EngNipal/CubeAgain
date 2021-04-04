@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace CubeAgain
 {
-    class FCLayer
+    public class FCLayer
     {
         public FCLayer(int numInputs, int numNeurons)
         {
@@ -16,7 +16,6 @@ namespace CubeAgain
             SetWeights(numInputs);
             SetRegsum();
         }
-        private readonly Random Rnd = new Random();
         public int NumInputs { get; set; }
         private double[] inputs;
         public double[] Inputs
@@ -43,6 +42,33 @@ namespace CubeAgain
             }
             return Outputs;
         }
+        // Метод корректировки весов нейронов слоя.
+        // !!!!! Нужно очень грамотно собрать вектор градиента !!!!!
+        // TODO: Определиться с корректировкой весов. Доработать метод.
+        internal void CorrectWeights(double[] gradfrom)
+        {
+            int i = 0;
+            foreach (Neuron neuron in Neurons)
+            {
+                // Для функции сигмоида.
+                //for (int j = 0; j < neuron.InputQuantity; j++)
+                //{
+                //    neuron.Weights[j] -= layer.Inputs[j] * neuron.Output * (1 - neuron.Output) * gradfrom[i] * LearningRate;
+                //    // Ниже - ещё один способ записать корректировку.
+                //    //neuron.Weights[j] -= layer.Inputs[j] * neuron.Output * (1 - neuron.Output) * gradfrom[Array.IndexOf(layer.Neurons, neuron)] * LearningRate;
+                //}
+
+                // Для функции RELU.
+                for (int j = 0; j < neuron.InputQuantity; j++)
+                {
+                    if (neuron.GetOutput() >= 0)
+                    {
+                        neuron.Weights[j] -= Inputs[j] * neuron.GetOutput() * gradfrom[i] * Training.LearningRate;
+                    }
+                }
+                i++;
+            }
+        }
         private void SetWeights(int numInputs)
         {
             double[] InitWeights = new double[numInputs];
@@ -62,5 +88,6 @@ namespace CubeAgain
                 RegSum = Neurons[i].Weights.Sum(elem => elem * elem) + (Neurons[i].Bias * Neurons[i].Bias);
             }
         }
+        private readonly Random Rnd = new Random();
     }
 }

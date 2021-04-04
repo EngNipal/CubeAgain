@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace CubeAgain
 {
-    class Neuron
+    public class Neuron
     {
         public Neuron(int numInputs, double[] weights, double bias)
         {
@@ -55,6 +55,7 @@ namespace CubeAgain
                 }
                 Output += Bias;
             }
+            WeightsChanged = false;
             return Output;
         }
     }

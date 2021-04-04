@@ -10,12 +10,12 @@ namespace CubeAgain
     internal static class Training
     {
         public const double DiscountCoeff = 0.90;
+        public const double LearningRate = 0.01;
 
         internal const double EvaluationOfSolvedPosition = 100;                 // TODO: Ещё раз обдумать этот параметр (18.01.2021).
         internal const double CorrectionIfPositionRepeats = -1;
         internal const int MaxNodes = 1024;
 
-        private const double LearningRate = 0.01;
         private static Dictionary<Position, TrainTuple> DataBase = new Dictionary<Position, TrainTuple>();
         // 1 - количество блоков, 2 - нейроны в блоке, 3 - веса конкретного нейрона.
         private static double[][][] NetWeights { get; set; }                    
@@ -41,7 +41,8 @@ namespace CubeAgain
             return result;
         }
         /// <summary>
-        /// Запоминает текущие веса нейросети.
+        /// Запоминает текущие веса нейросети в полях Training,
+        /// чтобы использовать их при дальнейшей корректировке весов.
         /// </summary>
         internal static void SaveNetWeights()
         {
@@ -106,33 +107,6 @@ namespace CubeAgain
                 newTuple.Score = position.Evaluation;
                 newTuple.Reward = 0;                                                    // TODO: определиться с Reward-ом.
                 DataBase.Add(position, newTuple);
-            }
-        }
-        // Метод корректировки весов нейронов слоя.
-        // !!!!! Нужно очень грамотно собрать вектор градиента !!!!!
-        // TODO: Определиться с корректировкой весов. Доработать метод.
-        internal static void CorrectWeights(double[] gradfrom, FCLayer layer)
-        {
-            int i = 0;
-            foreach(Neuron neuron in layer.Neurons)
-            {
-                // Для функции сигмоида.
-                //for (int j = 0; j < neuron.InputQuantity; j++)
-                //{
-                //    neuron.Weights[j] -= layer.Inputs[j] * neuron.Output * (1 - neuron.Output) * gradfrom[i] * LearningRate;
-                //    // Ниже - ещё один способ записать корректировку.
-                //    //neuron.Weights[j] -= layer.Inputs[j] * neuron.Output * (1 - neuron.Output) * gradfrom[Array.IndexOf(layer.Neurons, neuron)] * LearningRate;
-                //}
-
-                // Для функции RELU.
-                for (int j = 0; j < neuron.InputQuantity; j++)
-                {
-                    if (neuron.GetOutput() >= 0)
-                    {
-                        neuron.Weights[j] -= layer.Inputs[j] * neuron.GetOutput() * gradfrom[i] * LearningRate;
-                    }
-                }
-                i++;
             }
         }
         // TODO: Доработать метод BatchNormDerivation (17.01.2021)

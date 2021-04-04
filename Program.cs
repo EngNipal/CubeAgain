@@ -59,7 +59,6 @@ namespace CubeAgain
                     GamePath.Clear();
                     GamePath.Begin = CurrentNode;
                 }
-                
             }
             #region TODO: Finish that block
             // *** Корректировка весов ***
