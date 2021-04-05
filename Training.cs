@@ -105,7 +105,7 @@ namespace CubeAgain
                     Blocks[i].Outputs.CopyTo(newSet.InternalNetOutputs[i], 0);
                     newSet.StandDev[i] = Blocks[i].BNL.StandDeviation;
                 }
-                Policy.CopyTo(newSet.SourcePolicy, 0);
+                Policy.CopyTo(newSet.NetPolicy, 0);
                 newSet.NetScore = position.Evaluation;
                 newSet.Reward = 0;
                 DataBase.Add(position, newSet);
@@ -118,7 +118,9 @@ namespace CubeAgain
             // Подсчитываем Лосс-функцию.
             foreach (Dataset trainSet in miniBatch)
             {
-                double Loss = trainSet.GetLoss();
+                double VLoss = trainSet.GetVLoss();
+                double RLoss = trainSet.GetRLoss();
+                double PLoss = trainSet.GetPLoss();
 
                 for (int i = NumBlocks - 1; i >= 0; i--)
                 {

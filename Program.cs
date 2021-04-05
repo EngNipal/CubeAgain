@@ -39,7 +39,7 @@ namespace CubeAgain
             {
                 double[] ImprovedPolicy = GetProbDistrib(CurrNode);
                 Dataset CurrDataset = GetDatasetByPos(CurrPos);
-                ImprovedPolicy.CopyTo(CurrDataset.ImprovedPolicy, 0);
+                ImprovedPolicy.CopyTo(CurrDataset.SearchPolicy, 0);
                 CurrDataset.PathLength = GamePath.Length;
                 CurrDataset.Reward = Math.Pow(DiscountCoeff, CurrDataset.PathLength) * UnsolvedEvaluation;
 
