@@ -59,14 +59,6 @@ namespace CubeAgain
                 Steps[turn].Move.Policy = NeuralNetwork.Policy[(int)turn];
             }
         }
-        public void WinRateCorrection(Turns turn, double correction)
-        {
-            Steps[turn].Move.WinRate += correction;
-        }
-        public void VisitCorrection(Turns turn, int correction)
-        {
-            Steps[turn].Move.Visit += correction;
-        }
         public object Clone()
         {
             return MemberwiseClone();

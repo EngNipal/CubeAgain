@@ -98,24 +98,24 @@ namespace CubeAgain
             }
             return result;
         }
-        private static void ExpandNode(Node NewNode, Path path)
+        private static void ExpandNode(Node node, Path path)
         {
             for (Turns turn = Turns.R; turn <= Turns.F2; turn++)
             {
-                Position childPos = NewNode.Position.PosAfterTurn(turn);
+                Position childPos = node.Position.PosAfterTurn(turn);
                 Node childNode = NodeFromPosition(childPos, out bool NodeExists);
-                if (NodeExists && path.Contains(childPos))  // Если сделан возвратный ход или произошло зацикливание...
+                if (NodeExists && path.Contains(childPos))
                 {
-                    NewNode.WinRateCorrection(turn, CorrectionIfPositionRepeats);
+                    node.Steps[turn].Move.WinRate += CorrectionIfRepeat;
                 }
-                else // Такого узла ещё не было.
+                else
                 {
                     double moveWinRate = Solved.Equals(childPos)
                         ? SolvedEvaluation
                         : childPos.Evaluation;
                     Move currMove = new Move(Policy[(int)turn], 0, moveWinRate);
                     Step currStep = new Step(currMove, childNode);
-                    NewNode.AddStep(turn, currStep);
+                    node.AddStep(turn, currStep);
                 }
             }
         }

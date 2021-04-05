@@ -15,10 +15,9 @@ namespace CubeAgain
 
         public const double UnsolvedEvaluation = -1;
         public const double SolvedEvaluation = 100;
-        public const int CorrectionIfPositionRepeats = -1;
+        public const int CorrectionIfRepeat = -1;
         public const int MaxNodes = 1024;
 
-        private const double Zero = 0.0;
         private static readonly Dictionary<Position, Dataset> DataBase = new Dictionary<Position, Dataset>();
         // 1 - количество блоков, 2 - нейроны в блоке, 3 - веса конкретного нейрона.
         private static double[][][] NetWeights { get; set; }                    
@@ -108,7 +107,6 @@ namespace CubeAgain
                 }
                 Policy.CopyTo(newSet.SourcePolicy, 0);
                 newSet.NetScore = position.Evaluation;
-                // TODO: определиться с Reward-ом.
                 newSet.Reward = 0;
                 DataBase.Add(position, newSet);
             }
@@ -120,24 +118,7 @@ namespace CubeAgain
             // Подсчитываем Лосс-функцию.
             foreach (Dataset trainSet in miniBatch)
             {
-                // z - Результат игры. Он зависит от длины пути, чем длиннее путь, тем хуже результат.
-                double z = 100 / trainSet.PathLength;
-                // v - Оценка нейросети сколько ходов ещё до конца из этой позиции.
-                double v = trainSet.NetScore;
-                // Квадрат разности между этими величинами - есть VLoss.
-                double VLoss = z - v;
-                VLoss *= VLoss;
-                // RLoss - L2 регуляризация, умноженная на коэффициент регуляризации.
-                double RLoss = Zero;
-                RLoss += (from block in Blocks select block.FCL.RegSum).Sum();
-                RLoss *= RegulCoeff;
-                // PLoss - cross-entropy loss.
-                double PLoss = Zero;
-                for (int i = 0; i < trainSet.ImprovedPolicy.Length; i++)
-                {
-                    PLoss += trainSet.ImprovedPolicy[i] * (Zero - Math.Log(trainSet.SourcePolicy[i]));
-                }
-                double FullLoss = VLoss + PLoss + RLoss;
+                double Loss = trainSet.GetLoss();
 
                 for (int i = NumBlocks - 1; i >= 0; i--)
                 {
@@ -145,6 +126,7 @@ namespace CubeAgain
                 }
             }
         }
+        
         // TODO: Доработать метод BatchNormDerivation (2021-01-17).
         public static double[] BatchNormDerivation(double[] inputs)
         {
