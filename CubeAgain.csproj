@@ -63,10 +63,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BNLayer.cs" />
-    <Compile Include="ConvLayer.cs" />
     <Compile Include="FCLayer.cs" />
     <Compile Include="FCL_BNL_Block.cs" />
-    <Compile Include="Matrix.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="NeuralNetwork.cs" />
     <Compile Include="Neuron.cs" />
