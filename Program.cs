@@ -66,7 +66,7 @@ namespace CubeAgain
             foreach (TrainSet tuple in MiniBatch)
             {
                 double z = GamePath.Length - tuple.PathLength;                    // z - Количество ходов, которое реально прошло до решенной позиции
-                double v = tuple.Score;                                               // v - Оценка нейросети сколько ходов ещё до конца из этой позиции.
+                double v = tuple.NetScore;                                               // v - Оценка нейросети сколько ходов ещё до конца из этой позиции.
                 double VLoss = (z - v) * (z - v);                                       // Квадрат разности между этими величинами - есть VLoss.
                 double RLoss = Zero;                                                     // RLoss - L2 регуляризация, умноженная на коэффициент регуляризации.
                 RLoss += (from block in Blocks select block.FCL.RegSum).Sum();

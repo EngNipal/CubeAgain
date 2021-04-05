@@ -68,6 +68,7 @@ namespace CubeAgain
         /// </summary>
         /// <param name="StDev"></param>
         /// <returns></returns>
+        // Do not delete. The code calling that method is not written yet.
         // Не удалять! Часть кода, вызывающая данный метод ещё не написана.
         public double[] Gradiend(double StDev)
         {

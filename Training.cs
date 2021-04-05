@@ -101,10 +101,10 @@ namespace CubeAgain
                 for (int i = 0; i < Blocks.Length; i++)
                 {
                     Blocks[i].Outputs.CopyTo(newTuple.InternalNetOutputs[i], 0);
-                    newTuple.StDev[i] = Blocks[i].BNL.StandDeviation;
+                    newTuple.StandDev[i] = Blocks[i].BNL.StandDeviation;
                 }
                 Policy.CopyTo(newTuple.SourcePolicy, 0);
-                newTuple.Score = position.Evaluation;
+                newTuple.NetScore = position.Evaluation;
                 newTuple.Reward = 0;                                                    // TODO: определиться с Reward-ом.
                 DataBase.Add(position, newTuple);
             }
