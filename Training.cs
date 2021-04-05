@@ -16,7 +16,7 @@ namespace CubeAgain
         internal const double CorrectionIfPositionRepeats = -1;
         internal const int MaxNodes = 1024;
 
-        private static Dictionary<Position, TrainTuple> DataBase = new Dictionary<Position, TrainTuple>();
+        private static readonly Dictionary<Position, TrainSet> DataBase = new Dictionary<Position, TrainSet>();
         // 1 - количество блоков, 2 - нейроны в блоке, 3 - веса конкретного нейрона.
         private static double[][][] NetWeights { get; set; }                    
         public static double[][] PolicyHeadWeights { get; private set; }
@@ -75,7 +75,7 @@ namespace CubeAgain
         /// </summary>
         /// <param name="position"></param>
         /// <returns>Новый или существующий тупл, согласно позиции</returns>
-        public static TrainTuple GetTupleByPos(Position position)
+        public static TrainSet GetTupleByPos(Position position)
         {
             if (!DataBase.ContainsKey(position))
             {
@@ -96,7 +96,7 @@ namespace CubeAgain
             }
             else
             {
-                TrainTuple newTuple = new TrainTuple();
+                TrainSet newTuple = new TrainSet();
                 Blocks[0].FCL.Inputs.CopyTo(newTuple.NetInput, 0);
                 for (int i = 0; i < Blocks.Length; i++)
                 {

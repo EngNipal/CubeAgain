@@ -35,14 +35,14 @@ namespace CubeAgain
             Path GamePath = new Path(CurrentNode);
             Graph MainGraph = new Graph();
             const int TrainDataSetVolume = 128;
-            TrainTuple[] MiniBatch = new TrainTuple[TrainDataSetVolume];
+            TrainSet[] MiniBatch = new TrainSet[TrainDataSetVolume];
             for (int Tau = 0; Tau < TrainDataSetVolume; Tau++)
             {
                 double[] ImprovedPolicy = GetProbDistrib(CurrentNode, MainGraph);
-                TrainTuple CurrentTuple = Training.GetTupleByPos(CurrentPos);
-                ImprovedPolicy.CopyTo(CurrentTuple.ImprovedPolicy, 0);              // TODO: Разобраться почему приходится отдельно задавать ImprovedPolicy для тупла
-                CurrentTuple.PathLength = GamePath.Length;                          // TODO: Разобраться почему приходится отдельно задавать длину пути для тупла.
-                MiniBatch[Tau] = CurrentTuple;
+                TrainSet CurrentTuple = Training.GetTupleByPos(CurrentPos);
+                ImprovedPolicy.CopyTo(CurrentTuple.ImprovedPolicy, 0);
+                CurrentTuple.PathLength = GamePath.Length;
+                MiniBatch[Tau] = (TrainSet)CurrentTuple.Clone();
                 Turns BestTurn = Training.Argmax(ImprovedPolicy);
                 GamePath.AddStep(CurrentNode.Steps[BestTurn]);
                 CurrentPos = CurrentPos.PosAfterTurn(BestTurn);
@@ -64,7 +64,7 @@ namespace CubeAgain
             // *** Корректировка весов ***
             const double RegulCoeff = 0.001;                                            // Гиперпараметр регуляризации.
             // Подсчитываем Лосс-функцию.
-            foreach (TrainTuple tuple in MiniBatch)
+            foreach (TrainSet tuple in MiniBatch)
             {
                 double z = GamePath.Length - tuple.PathLength;                    // z - Количество ходов, которое реально прошло до решенной позиции
                 double v = tuple.Score;                                               // v - Оценка нейросети сколько ходов ещё до конца из этой позиции.

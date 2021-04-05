@@ -7,7 +7,7 @@ using static CubeAgain.NeuralNetwork;
 
 namespace CubeAgain
 {
-    internal class TrainTuple
+    internal class TrainSet : ICloneable
     {
         public double[] NetInput { get; set; }                                      // Вход сети (нормализованные данные).
         public double[][] InternalNetOutputs { get; set; }                          // Выходы слоёв внутри сети. (1-я координата - номер блока; 2-я - массив выходных значений блока.
@@ -17,7 +17,7 @@ namespace CubeAgain
         public double Score { get; set; }                                           // Оценка позиции сетью.
         public double Reward { get; set; }                                          // Главная плюшка, получаемая от среды.
         public int PathLength { get; set; }                                         // Длина пути в конкретный момент.
-        public TrainTuple()
+        public TrainSet()
         {
             NetInput = new double[NumInputs];
             InternalNetOutputs = new double[NumBlocks][];
@@ -28,6 +28,22 @@ namespace CubeAgain
             StDev = new double[NumBlocks];
             SourcePolicy = new double[Policy.Length];
             ImprovedPolicy = new double[Policy.Length];
+        }
+        public object Clone()
+        {
+            TrainSet other = new TrainSet();
+            NetInput.CopyTo(other.NetInput, 0);
+            for (int i = 0; i < InternalNetOutputs.Length; i++)
+            {
+                InternalNetOutputs[i].CopyTo(other.InternalNetOutputs[i], 0);
+            }
+            StDev.CopyTo(other.StDev, 0);
+            SourcePolicy.CopyTo(other.SourcePolicy, 0);
+            ImprovedPolicy.CopyTo(other.ImprovedPolicy, 0);
+            other.Score = Score;
+            other.Reward = Reward;
+            other.PathLength = PathLength;
+            return other;
         }
     }
 }
