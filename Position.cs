@@ -41,10 +41,10 @@ namespace CubeAgain
         /// <returns>Новая позиция, полученная из данной, ходом <see paramname="turn"/></returns>
         public Position PosAfterTurn(Turns turn)
         {
-            int[] tempState = new int[State.Length];
-            State.CopyTo(tempState, 0);
-            Environment.MakeTurn(tempState, turn);
-            return new Position(Evaluation, tempState);
+            int[] otherState = new int[State.Length];
+            State.CopyTo(otherState, 0);
+            Environment.MakeTurn(otherState, turn);
+            return new Position(Evaluation, otherState);
         }
     }
 }

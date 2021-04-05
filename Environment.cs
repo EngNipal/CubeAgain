@@ -9,7 +9,30 @@ namespace CubeAgain
      {   
         public const int Cells = 24;
         public static Position Solved { get; } = new Position(SetSolved());
-
+        private static readonly Dictionary<Position, Node> PositionsNodes = new Dictionary<Position, Node>();
+        ///  Метод получения узла в дереве по позиции
+        /// <param name="position">Позиция для узла</param>
+        /// <param name="node">Возвращает узел содержащий позицию</param>
+        /// <returns><see langword="true"/> - если возвращён новый узел,
+        /// <see langword="false"/> - если возвращён уже имеющийся узел</returns>
+        public static Node NodeFromPosition(Position position) => NodeFromPosition(position, out _);
+        public static Node NodeFromPosition(Position position, out bool exists)
+        {
+            Node result;
+            exists = PositionsNodes.ContainsKey(position);
+            if (exists)
+            {
+                result = PositionsNodes[position];
+            }
+            else
+            {
+                NeuralNetwork.Analyze(position);
+                result = new Node(position);
+                result.SetMovesPolicy();
+                PositionsNodes.Add(position, result);
+            }
+            return result;
+        }
         // TODO: Написать метод поворачивающий кубик в пространстве, (2020-12-27)
         // Если его левый задний кубик не на своём месте.
 
@@ -312,7 +335,7 @@ namespace CubeAgain
         /// Метод вывода скрамбла в консоль.
         /// </summary>
         /// <param name="scramble"></param>
-        internal static void WriteScramble(Turns[] scramble)
+        public static void WriteScramble(Turns[] scramble)
         {
             Console.WriteLine("Ваш скрамбл:");
             foreach (Turns element in scramble)

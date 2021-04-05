@@ -33,12 +33,11 @@ namespace CubeAgain
             Position CurrentPos = new Position(CurrState);
             Node CurrentNode = new Node(CurrentPos);
             Path GamePath = new Path(CurrentNode);
-            Graph MainGraph = new Graph();
             const int TrainDataSetVolume = 128;
             TrainSet[] MiniBatch = new TrainSet[TrainDataSetVolume];
             for (int Tau = 0; Tau < TrainDataSetVolume; Tau++)
             {
-                double[] ImprovedPolicy = GetProbDistrib(CurrentNode, MainGraph);
+                double[] ImprovedPolicy = GetProbDistrib(CurrentNode);
                 TrainSet CurrentTuple = Training.GetTupleByPos(CurrentPos);
                 ImprovedPolicy.CopyTo(CurrentTuple.ImprovedPolicy, 0);
                 CurrentTuple.PathLength = GamePath.Length;
@@ -46,7 +45,7 @@ namespace CubeAgain
                 Turns BestTurn = Training.Argmax(ImprovedPolicy);
                 GamePath.AddStep(CurrentNode.Steps[BestTurn]);
                 CurrentPos = CurrentPos.PosAfterTurn(BestTurn);
-                CurrentNode = MainGraph.NodeFromPosition(CurrentPos);
+                CurrentNode = NodeFromPosition(CurrentPos);
                 if (Solved.Equals(CurrentPos))
                 {
                     CurrentTuple.PathLength++;
@@ -55,7 +54,7 @@ namespace CubeAgain
                     SetScramble(CurrState, Rnd.Next(1, 16));
                     CurrentPos = new Position(CurrState);
                     Analyze(CurrentPos);
-                    CurrentNode = MainGraph.NodeFromPosition(CurrentPos);
+                    CurrentNode = NodeFromPosition(CurrentPos);
                     GamePath.Clear();
                     GamePath.Start = CurrentNode;
                 }
@@ -93,7 +92,7 @@ namespace CubeAgain
         /// <param name="currentNode"></param>
         /// <param name="graph"></param>
         /// <returns>Improved probability distribution for received node.</returns>
-        private static double[] GetProbDistrib(Node currentNode, Graph graph)
+        private static double[] GetProbDistrib(Node currentNode)
         {
             Path SearchPath = new Path(currentNode);
             for (int i = 0; i < Training.MaxNodes; i++)
@@ -102,12 +101,12 @@ namespace CubeAgain
                 {
                     Turns BestTurn = currentNode.GetBestTurn();
                     SearchPath.AddStep(currentNode.Steps[BestTurn]);
-                    currentNode = graph.NodeFromPosition(currentNode.Steps[BestTurn].NextNode.Position);
+                    currentNode = NodeFromPosition(currentNode.Steps[BestTurn].NextNode.Position);
                 }
                 else
                 {
                     currentNode.WasVisited = true;
-                    ExpandNode(currentNode, graph, SearchPath);
+                    ExpandNode(currentNode, SearchPath);
                     SearchPath.BackPropagate();
                 }
             }
@@ -118,12 +117,12 @@ namespace CubeAgain
             }
             return result;
         }
-        private static void ExpandNode(Node NewNode, Graph graph, Path path)
+        private static void ExpandNode(Node NewNode, Path path)
         {
             for (Turns turn = Turns.R; turn <= Turns.F2; turn++)
             {
                 Position childPos = NewNode.Position.PosAfterTurn(turn);
-                Node childNode = graph.NodeFromPosition(childPos, out bool NodeExists);
+                Node childNode = NodeFromPosition(childPos, out bool NodeExists);
                 if (NodeExists && path.Contains(childPos))  // Если сделан возвратный ход или произошло зацикливание...
                 {
                     NewNode.WinRateCorrection(turn, Training.CorrectionIfPositionRepeats);
