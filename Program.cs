@@ -9,27 +9,27 @@ namespace CubeAgain
     class Program
     {
         private const double Zero = 0.0;
-
+        /// <summary>
+        /// Main Logic
+        /// 0. Set position by scrambling.
+        /// 1. Evaluate position by neural network.
+        /// 2. Store the evaluation in training set.
+        /// 3. Receive improved evaluations after tree search.
+        /// 4. Store new evaluations in training set separate from previous evaluations.
+        /// 5. Select best move and make it - get new position.
+        /// 6. Repeat steps 1-5 until training set is full.
+        /// 7. Correct weights in neural network using training set.
+        /// 8. Repeat steps 0-7 until we've got best NN.
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
-            // Общая логика:
-            // 0. Задали позицию запутыванием.
-            // 1. Оценили позицию сетью.
-            // 2. Записали оценку сети в обучающий сет.
-            // 3. Походили по дереву - получили уточнённые оценки.
-            // 4. Записали уточнённые оценки в обучающий сет.
-            // 5. Сделали ход - получили новую позицию.
-            // 6. Повторили шаги 1-5 пока не придём к выигрышу.
-            // 7. На собранном сете провели корректировку весов нейросети.
-            // 8. Повторили шаги 0-7 пока не научимся.
-
             IEnumerable<int> CurrState = SetSolved();
             SetNetworkStructure();
             Training.SaveNetWeights();
             Analyzed += Training.AddTuple;
             Random Rnd = new Random();
             SetScramble(CurrState, Rnd.Next(1, 16), out Turns[] NewScramble);
-            WriteScramble(NewScramble);
             Position CurrentPos = new Position(CurrState);
             Node CurrentNode = new Node(CurrentPos);
             Path GamePath = new Path(CurrentNode);
@@ -87,6 +87,12 @@ namespace CubeAgain
             #endregion
             WriteState(CurrState);
         }
+        /// <summary>
+        /// Realizes MCTS logic. MCTS = Monte Carlo Tree Search.
+        /// </summary>
+        /// <param name="currentNode"></param>
+        /// <param name="graph"></param>
+        /// <returns>Improved probability distribution for received node.</returns>
         private static double[] GetProbDistrib(Node currentNode, Graph graph)
         {
             Path SearchPath = new Path(currentNode);
