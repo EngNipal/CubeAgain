@@ -7,7 +7,7 @@ using static CubeAgain.NeuralNetwork;
 
 namespace CubeAgain
 {
-    internal class TrainSet : ICloneable
+    class Dataset : ICloneable
     {
         public double[] NetInput { get; set; }
         // 1st dimension - block number, 2nd - block output values.
@@ -19,7 +19,7 @@ namespace CubeAgain
         public double NetScore { get; set; }
         public double Reward { get; set; }
         public int PathLength { get; set; }
-        public TrainSet()
+        public Dataset()
         {
             NetInput = new double[NumInputs];
             InternalNetOutputs = new double[NumBlocks][];
@@ -33,7 +33,7 @@ namespace CubeAgain
         }
         public object Clone()
         {
-            TrainSet other = new TrainSet();
+            Dataset other = new Dataset();
             NetInput.CopyTo(other.NetInput, 0);
             for (int i = 0; i < InternalNetOutputs.Length; i++)
             {

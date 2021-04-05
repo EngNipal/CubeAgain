@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using static CubeAgain.Environment;
 using static CubeAgain.NeuralNetwork;
+using static CubeAgain.Training;
 
 namespace CubeAgain
 {
     class Program
     {
-        private const double Zero = 0.0;
         /// <summary>
         /// Main Logic
         /// 0. Set position by scrambling.
@@ -26,82 +26,63 @@ namespace CubeAgain
         {
             IEnumerable<int> CurrState = SetSolved();
             SetNetworkStructure();
-            Training.SaveNetWeights();
-            Analyzed += Training.AddTuple;
+            SaveNetWeights();
+            Analyzed += AddDataset;
             Random Rnd = new Random();
-            SetScramble(CurrState, Rnd.Next(1, 16), out Turns[] NewScramble);
-            Position CurrentPos = new Position(CurrState);
-            Node CurrentNode = new Node(CurrentPos);
-            Path GamePath = new Path(CurrentNode);
-            const int TrainDataSetVolume = 128;
-            TrainSet[] MiniBatch = new TrainSet[TrainDataSetVolume];
-            for (int Tau = 0; Tau < TrainDataSetVolume; Tau++)
+            SetScramble(CurrState, Rnd.Next(MinScrLength, MaxScrLength), out Turns[] NewScramble);
+            Position CurrPos = new Position(CurrState);
+            Node CurrNode = new Node(CurrPos);
+            Path GamePath = new Path(CurrNode);
+            const int TrainDatasetVolume = 128;
+            Dataset[] MiniBatch = new Dataset[TrainDatasetVolume];
+            for (int i = 0; i < TrainDatasetVolume; i++)
             {
-                double[] ImprovedPolicy = GetProbDistrib(CurrentNode);
-                TrainSet CurrentTuple = Training.GetTupleByPos(CurrentPos);
-                ImprovedPolicy.CopyTo(CurrentTuple.ImprovedPolicy, 0);
-                CurrentTuple.PathLength = GamePath.Length;
-                MiniBatch[Tau] = (TrainSet)CurrentTuple.Clone();
-                Turns BestTurn = Training.Argmax(ImprovedPolicy);
-                GamePath.AddStep(CurrentNode.Steps[BestTurn]);
-                CurrentPos = CurrentPos.PosAfterTurn(BestTurn);
-                CurrentNode = NodeFromPosition(CurrentPos);
-                if (Solved.Equals(CurrentPos))
-                {
-                    CurrentTuple.PathLength++;
-                    CurrentTuple.Reward = 1;                                        // TODO: определиться с Reward-ом.
-                    CurrState = SetSolved();
-                    SetScramble(CurrState, Rnd.Next(1, 16));
-                    CurrentPos = new Position(CurrState);
-                    Analyze(CurrentPos);
-                    CurrentNode = NodeFromPosition(CurrentPos);
-                    GamePath.Clear();
-                    GamePath.Start = CurrentNode;
-                }
-            }
-            #region TODO: Finish that block
-            // *** Корректировка весов ***
-            const double RegulCoeff = 0.001;                                            // Гиперпараметр регуляризации.
-            // Подсчитываем Лосс-функцию.
-            foreach (TrainSet tuple in MiniBatch)
-            {
-                double z = GamePath.Length - tuple.PathLength;                    // z - Количество ходов, которое реально прошло до решенной позиции
-                double v = tuple.NetScore;                                               // v - Оценка нейросети сколько ходов ещё до конца из этой позиции.
-                double VLoss = (z - v) * (z - v);                                       // Квадрат разности между этими величинами - есть VLoss.
-                double RLoss = Zero;                                                     // RLoss - L2 регуляризация, умноженная на коэффициент регуляризации.
-                RLoss += (from block in Blocks select block.FCL.RegSum).Sum();
-                RLoss *= RegulCoeff;
-                double PLoss = Zero;                                                     // PLoss - cross-entropy loss.
-                for (int i = 0; i < tuple.ImprovedPolicy.Length; i++)
-                {
-                    PLoss += tuple.ImprovedPolicy[i] * (Zero - Math.Log(tuple.SourcePolicy[i]));
-                }
-                double FullLoss = VLoss + PLoss + RLoss;
+                double[] ImprovedPolicy = GetProbDistrib(CurrNode);
+                Dataset CurrDataset = GetDatasetByPos(CurrPos);
+                ImprovedPolicy.CopyTo(CurrDataset.ImprovedPolicy, 0);
+                CurrDataset.PathLength = GamePath.Length;
+                CurrDataset.Reward = Math.Pow(DiscountCoeff, CurrDataset.PathLength) * UnsolvedEvaluation;
 
-                for (int i = NumBlocks - 1; i >= 0; i--)
+                Turns BestNetworkTurn = Argmax(ImprovedPolicy);
+                GamePath.AddStep(CurrNode.Steps[BestNetworkTurn]);
+                CurrPos = CurrPos.PosAfterTurn(BestNetworkTurn);
+                CurrNode = NodeFromPosition(CurrPos);
+                if (Solved.Equals(CurrPos))
                 {
-                    //Blocks[i]
+                    CurrDataset.PathLength++;
+                    CurrDataset.Reward = Math.Pow(DiscountCoeff, CurrDataset.PathLength) * SolvedEvaluation;
+                    CurrState = SetSolved();
+                    SetScramble(CurrState, Rnd.Next(MaxScrLength, MaxScrLength));
+                    CurrPos = new Position(CurrState);
+                    Analyze(CurrPos);
+                    CurrNode = NodeFromPosition(CurrPos);
+                    GamePath.Clear();
+                    GamePath.Start = CurrNode;
                 }
+                MiniBatch[i] = (Dataset)CurrDataset.Clone();
             }
-            #endregion
+
+            WeightsCorrection(MiniBatch);
+            
             WriteState(CurrState);
         }
         /// <summary>
         /// Realizes MCTS logic. MCTS = Monte Carlo Tree Search.
         /// </summary>
-        /// <param name="currentNode"></param>
+        /// <param name="startNode"></param>
         /// <param name="graph"></param>
         /// <returns>Improved probability distribution for received node.</returns>
-        private static double[] GetProbDistrib(Node currentNode)
+        private static double[] GetProbDistrib(Node startNode)
         {
+            Node currentNode = (Node)startNode.Clone();
             Path SearchPath = new Path(currentNode);
-            for (int i = 0; i < Training.MaxNodes; i++)
+            for (int i = 0; i < MaxNodes; i++)
             {
                 if (currentNode.WasVisited)
                 {
-                    Turns BestTurn = currentNode.GetBestTurn();
-                    SearchPath.AddStep(currentNode.Steps[BestTurn]);
-                    currentNode = NodeFromPosition(currentNode.Steps[BestTurn].NextNode.Position);
+                    Turns BestSearchTurn = currentNode.GetBestTurn();
+                    SearchPath.AddStep(currentNode.Steps[BestSearchTurn]);
+                    currentNode = NodeFromPosition(currentNode.Steps[BestSearchTurn].NextNode.Position);
                 }
                 else
                 {
@@ -113,7 +94,7 @@ namespace CubeAgain
             double[] result = new double[HeadPolicy.NumNeurons];
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = currentNode.Steps[(Turns)i].Move.Visit;                     // TODO: Уточнить как именно выбирается ход.
+                result[i] = currentNode.Steps[(Turns)i].Move.Visit;                     // TODO: Уточнить как именно выбирается ход. Лекция 14 в 
             }
             return result;
         }
@@ -125,13 +106,13 @@ namespace CubeAgain
                 Node childNode = NodeFromPosition(childPos, out bool NodeExists);
                 if (NodeExists && path.Contains(childPos))  // Если сделан возвратный ход или произошло зацикливание...
                 {
-                    NewNode.WinRateCorrection(turn, Training.CorrectionIfPositionRepeats);
+                    NewNode.WinRateCorrection(turn, CorrectionIfPositionRepeats);
                 }
                 else // Такого узла ещё не было.
                 {
                     double moveWinRate = Solved.Equals(childPos)
-                        ? Training.EvaluationOfSolvedPosition
-                        : childPos.Evaluation; // * Math.Pow(Training.DiscountCoeff, path.Length);
+                        ? SolvedEvaluation
+                        : childPos.Evaluation;
                     Move currMove = new Move(Policy[(int)turn], 0, moveWinRate);
                     Step currStep = new Step(currMove, childNode);
                     NewNode.AddStep(turn, currStep);

@@ -66,17 +66,17 @@ namespace CubeAgain
         /// <summary>
         /// Метод вычисления градиента по слою.
         /// </summary>
-        /// <param name="StDev"></param>
+        /// <param name="stDev"></param>
         /// <returns></returns>
         // Do not delete. The code calling that method is not written yet.
         // Не удалять! Часть кода, вызывающая данный метод ещё не написана.
-        public double[] Gradiend(double StDev)
+        public double[] Gradiend(double stDev)
         {
             double[] result = new double[NumInputs];
-            if (0 != StDev)
+            if (0 != stDev)
             {
-                double FirstConst = (NumInputs - 1) / (NumInputs * StDev);
-                double SecondConst = Math.Pow(StDev, 3) * (NumInputs - 1);
+                double FirstConst = (NumInputs - 1) / (NumInputs * stDev);
+                double SecondConst = Math.Pow(stDev, 3) * (NumInputs - 1);
                 for (int i = 0; i < NumInputs; i++)
                 {
                     result[i] = FirstConst;

@@ -71,7 +71,7 @@
     <Compile Include="Node.cs" />
     <Compile Include="Path.cs" />
     <Compile Include="Step.cs" />
-    <Compile Include="TrainSet.cs" />
+    <Compile Include="DataSet.cs" />
     <Compile Include="Training.cs" />
     <Compile Include="Turns.cs" />
     <Compile Include="Environment.cs" />

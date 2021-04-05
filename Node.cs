@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace CubeAgain
 {
-    public class Node
+    public class Node : ICloneable
     {
         public readonly Dictionary<Turns, Step> Steps = new Dictionary<Turns, Step>();
         public bool WasVisited { get; set; }
@@ -33,7 +33,7 @@ namespace CubeAgain
         /// Метод, выбирающий лучший ход.
         /// </summary>
         /// <returns></returns>
-        public Turns GetBestTurn()  
+        public Turns GetBestTurn()
         {
             Turns BestTurn = Turns.R;
             double Max = double.MinValue;
@@ -66,6 +66,10 @@ namespace CubeAgain
         public void VisitCorrection(Turns turn, int correction)
         {
             Steps[turn].Move.Visit += correction;
+        }
+        public object Clone()
+        {
+            return MemberwiseClone();
         }
     }
 }

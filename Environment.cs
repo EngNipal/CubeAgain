@@ -8,6 +8,8 @@ namespace CubeAgain
      static class Environment
      {   
         public const int Cells = 24;
+        public const int MinScrLength = 1;
+        public const int MaxScrLength = 16;
         public static Position Solved { get; } = new Position(SetSolved());
         private static readonly Dictionary<Position, Node> PositionsNodes = new Dictionary<Position, Node>();
         ///  Метод получения узла в дереве по позиции
