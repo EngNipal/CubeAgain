@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static CubeAgain.NeuralNetwork;
+using static CubeAgain.Training;
 
 namespace CubeAgain
 {
@@ -19,6 +20,17 @@ namespace CubeAgain
         public double NetScore { get; set; }
         public double Reward { get; set; }
         public int PathLength { get; set; }
+        // Game result.
+        public double Z { get; private set; }
+        // VLoss - квадрат разности между реальным результатом игры и предсказанным сетью.
+        public double VLoss { get; private set; }
+        // RLoss - L2 регуляризация, умноженная на коэффициент регуляризации.
+        public double RLoss { get; private set; }
+        // PLoss - cross-entropy loss.
+        public double PLoss { get; private set; }
+        // Должен пойти на HeadEval.
+        public double GradV => 2 * (NetScore - Z);
+        public double Loss => VLoss + RLoss + PLoss;
         private const double Zero = 0.0;
         public Dataset()
         {
@@ -31,6 +43,46 @@ namespace CubeAgain
             StandDev = new double[NumBlocks];
             NetPolicy = new double[Policy.Length];
             SearchPolicy = new double[Policy.Length];
+        }
+        public void CompleteUnsolved(double[] improvedPolicy, int pathLength)
+        {
+            improvedPolicy.CopyTo(SearchPolicy, 0);
+            PathLength = pathLength;
+            Reward = Math.Pow(DiscountCoeff, PathLength) * UnsolvedEvaluation;
+            SetZ();
+            SetVLoss();
+            SetRLoss();
+            SetPLoss();
+        }
+        public void CompleteSolved()
+        {
+            PathLength++;
+            Reward = Math.Pow(DiscountCoeff, PathLength) * SolvedEvaluation;
+            SetZ();
+            SetVLoss();
+        }
+        private void SetZ()
+        {
+            Z = SolvedEvaluation / PathLength;
+        }
+        private void SetVLoss()
+        {
+            VLoss = Z - NetScore;
+            VLoss *= VLoss;
+        }
+        private void SetRLoss()
+        {
+            RLoss = Zero;
+            RLoss += (from block in Blocks select block.FCL.RegSum).Sum();
+            RLoss *= RegulCoeff;
+        }
+        private void SetPLoss()
+        {
+            PLoss = Zero;
+            for (int i = 0; i < SearchPolicy.Length; i++)
+            {
+                PLoss += SearchPolicy[i] * (Zero - Math.Log(NetPolicy[i]));
+            }
         }
         public object Clone()
         {
@@ -46,34 +98,11 @@ namespace CubeAgain
             other.NetScore = NetScore;
             other.Reward = Reward;
             other.PathLength = PathLength;
+            other.RLoss = RLoss;
+            other.SetZ();
+            other.SetVLoss();
+            other.SetPLoss();
             return other;
-        }
-        // VLoss - квадрат разности между реальным результатом игры и предсказанным сетью.
-        public double GetVLoss()
-        {
-            // z - Результат игры. Он зависит от длины пути, чем длиннее путь, тем хуже результат.
-            double z = Training.SolvedEvaluation / PathLength;
-            double VLoss = z - NetScore;
-            VLoss *= VLoss;
-            return VLoss;
-        }
-        // RLoss - L2 регуляризация, умноженная на коэффициент регуляризации.
-        public double GetRLoss()
-        {
-            double RLoss = Zero;
-            RLoss += (from block in Blocks select block.FCL.RegSum).Sum();
-            RLoss *= Training.RegulCoeff;
-            return RLoss;
-        }
-        // PLoss - cross-entropy loss.
-        public double GetPLoss()
-        {
-            double PLoss = Zero;
-            for (int i = 0; i < SearchPolicy.Length; i++)
-            {
-                PLoss += SearchPolicy[i] * (Zero - Math.Log(NetPolicy[i]));
-            }
-            return PLoss;
         }
     }
 }

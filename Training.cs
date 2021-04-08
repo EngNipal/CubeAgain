@@ -118,23 +118,15 @@ namespace CubeAgain
             // Подсчитываем Лосс-функцию.
             foreach (Dataset trainSet in miniBatch)
             {
-                double VLoss = trainSet.GetVLoss();
-                double RLoss = trainSet.GetRLoss();
-                double PLoss = trainSet.GetPLoss();
+                double VLoss = trainSet.VLoss;
+                double RLoss = trainSet.RLoss;
+                double PLoss = trainSet.PLoss;
 
                 for (int i = NumBlocks - 1; i >= 0; i--)
                 {
                     //Blocks[i]
                 }
             }
-        }
-        
-        // TODO: Доработать метод BatchNormDerivation (2021-01-17).
-        public static double[] BatchNormDerivation(double[] inputs)
-        {
-            double[] result = new double[inputs.Length];
-
-            return result;
         }
     }
 }

@@ -45,7 +45,7 @@ namespace CubeAgain
         /// Метод нормализации выходных данных.
         /// </summary>
         /// <returns></returns>
-        public double[] BatchNormalization()
+        public double[] BatchNormalization() // TODO: Consider to divide in 2 methods. StDev == 0 and StDev != 0 (2021-04-07)
         {
             if (0 != StandDeviation)
             {
@@ -69,6 +69,7 @@ namespace CubeAgain
         /// <param name="stDev"></param>
         /// <returns></returns>
         // Do not delete. The code calling that method is not written yet.
+        // TODO: Consider to divide in 2 methods (2021-04-07)
         // Не удалять! Часть кода, вызывающая данный метод ещё не написана.
         public double[] Gradiend(double stDev)
         {
@@ -90,6 +91,13 @@ namespace CubeAgain
                     result[i] = 1 - (1 / NumInputs);
                 }
             }
+            return result;
+        }
+        // TODO: Доработать метод BatchNormDerivation (2021-01-17).
+        public static double[] BatchNormDerivation(double[] inputs)
+        {
+            double[] result = new double[inputs.Length];
+
             return result;
         }
     }

@@ -4,13 +4,13 @@ using System.Linq;
 
 namespace CubeAgain
 {
-    internal static class NeuralNetwork
+    static class NeuralNetwork
     {
         public static double Evaluation { get; private set; }
         public static double[] Policy { get; private set; }
-        internal static int NumInputs { get; private set; }
-        internal static int NumBlocks { get; private set; }
-        internal static FCL_BNL_Block[] Blocks { get; set; }
+        public static int NumInputs { get; private set; }
+        public static int NumBlocks { get; private set; }
+        public static FCL_BNL_Block[] Blocks { get; set; }
         public static FCLayer HeadPolicy { get; private set; }
         public static Neuron HeadEval { get; private set; }
         public delegate void ActivationFunction(double[] data);

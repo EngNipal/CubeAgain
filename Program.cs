@@ -7,8 +7,13 @@ using static CubeAgain.Training;
 
 namespace CubeAgain
 {
+    
     class Program
     {
+        private static readonly Random Rnd = new Random();
+        private static Position CurrPos { get; set; }
+        private static Node CurrNode { get; set; }
+        private static Path GamePath { get; set; }
         /// <summary>
         /// Main Logic
         /// 0. Set position by scrambling.
@@ -28,31 +33,26 @@ namespace CubeAgain
             SetNetworkStructure();
             SaveNetWeights();
             Analyzed += AddDataset;
-            Random Rnd = new Random();
             SetScramble(CurrState, Rnd.Next(MinScrLength, MaxScrLength), out Turns[] NewScramble);
-            Position CurrPos = new Position(CurrState);
-            Node CurrNode = new Node(CurrPos);
-            Path GamePath = new Path(CurrNode);
+            CurrPos = new Position(CurrState);
+            CurrNode = new Node(CurrPos);
+            GamePath = new Path(CurrNode);
             const int TrainDatasetVolume = 128;
             Dataset[] MiniBatch = new Dataset[TrainDatasetVolume];
             for (int i = 0; i < TrainDatasetVolume; i++)
             {
                 double[] ImprovedPolicy = GetProbDistrib(CurrNode);
                 Dataset CurrDataset = GetDatasetByPos(CurrPos);
-                ImprovedPolicy.CopyTo(CurrDataset.SearchPolicy, 0);
-                CurrDataset.PathLength = GamePath.Length;
-                CurrDataset.Reward = Math.Pow(DiscountCoeff, CurrDataset.PathLength) * UnsolvedEvaluation;
-
+                CurrDataset.CompleteUnsolved(ImprovedPolicy, GamePath.Length);
                 Turns BestNetworkTurn = Argmax(ImprovedPolicy);
                 GamePath.AddStep(CurrNode.Steps[BestNetworkTurn]);
                 CurrPos = CurrPos.PosAfterTurn(BestNetworkTurn);
                 CurrNode = NodeFromPosition(CurrPos);
                 if (Solved.Equals(CurrPos))
                 {
-                    CurrDataset.PathLength++;
-                    CurrDataset.Reward = Math.Pow(DiscountCoeff, CurrDataset.PathLength) * SolvedEvaluation;
+                    CurrDataset.CompleteSolved();
                     CurrState = SetSolved();
-                    SetScramble(CurrState, Rnd.Next(MaxScrLength, MaxScrLength));
+                    SetScramble(CurrState, Rnd.Next(MinScrLength, MaxScrLength));
                     CurrPos = new Position(CurrState);
                     Analyze(CurrPos);
                     CurrNode = NodeFromPosition(CurrPos);
