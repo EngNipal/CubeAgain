@@ -115,7 +115,6 @@ namespace CubeAgain
         // TODO: Finish that block
         public static void WeightsCorrection(Dataset[] miniBatch)
         {
-            // Подсчитываем Лосс-функцию.
             foreach (Dataset trainSet in miniBatch)
             {
                 double VLoss = trainSet.VLoss;

@@ -41,13 +41,13 @@ namespace CubeAgain
             Dataset[] MiniBatch = new Dataset[TrainDatasetVolume];
             for (int i = 0; i < TrainDatasetVolume; i++)
             {
-                double[] ImprovedPolicy = GetProbDistrib(CurrNode);
+                double[] ImprovedPolicy = ProbDistrib(CurrNode);
                 Dataset CurrDataset = GetDatasetByPos(CurrPos);
                 CurrDataset.CompleteUnsolved(ImprovedPolicy, GamePath.Length);
                 Turns BestNetworkTurn = Argmax(ImprovedPolicy);
                 GamePath.AddStep(CurrNode.Steps[BestNetworkTurn]);
                 CurrPos = CurrPos.PosAfterTurn(BestNetworkTurn);
-                CurrNode = NodeFromPosition(CurrPos);
+                CurrNode = NodeByPosition(CurrPos);
                 if (Solved.Equals(CurrPos))
                 {
                     CurrDataset.CompleteSolved();
@@ -55,7 +55,7 @@ namespace CubeAgain
                     SetScramble(CurrState, Rnd.Next(MinScrLength, MaxScrLength));
                     CurrPos = new Position(CurrState);
                     Analyze(CurrPos);
-                    CurrNode = NodeFromPosition(CurrPos);
+                    CurrNode = NodeByPosition(CurrPos);
                     GamePath.Clear();
                     GamePath.Start = CurrNode;
                 }
@@ -64,7 +64,7 @@ namespace CubeAgain
 
             WeightsCorrection(MiniBatch);
             
-            WriteState(CurrState);
+            //WriteState(CurrState);
         }
         /// <summary>
         /// Realizes MCTS logic. MCTS = Monte Carlo Tree Search.
@@ -72,7 +72,7 @@ namespace CubeAgain
         /// <param name="startNode"></param>
         /// <param name="graph"></param>
         /// <returns>Improved probability distribution for received node.</returns>
-        private static double[] GetProbDistrib(Node startNode)
+        private static double[] ProbDistrib(Node startNode)
         {
             Node currentNode = (Node)startNode.Clone();
             Path SearchPath = new Path(currentNode);
@@ -82,42 +82,22 @@ namespace CubeAgain
                 {
                     Turns BestSearchTurn = currentNode.GetBestTurn();
                     SearchPath.AddStep(currentNode.Steps[BestSearchTurn]);
-                    currentNode = NodeFromPosition(currentNode.Steps[BestSearchTurn].NextNode.Position);
+                    currentNode = NodeByPosition(currentNode.Steps[BestSearchTurn].NextNode.Position);
                 }
                 else
                 {
-                    currentNode.WasVisited = true;
-                    ExpandNode(currentNode, SearchPath);
+                    currentNode.Visit();
+                    currentNode.Expand(SearchPath);
                     SearchPath.BackPropagate();
+                    SearchPath.Clear();
                 }
             }
             double[] result = new double[HeadPolicy.NumNeurons];
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = currentNode.Steps[(Turns)i].Move.Visit;                     // TODO: Уточнить как именно выбирается ход. Лекция 14 в 
+                result[i] = startNode.Steps[(Turns)i].Move.Visit;                     // TODO: Уточнить как именно выбирается ход. Лекция 14
             }
             return result;
-        }
-        private static void ExpandNode(Node node, Path path)
-        {
-            for (Turns turn = Turns.R; turn <= Turns.F2; turn++)
-            {
-                Position childPos = node.Position.PosAfterTurn(turn);
-                Node childNode = NodeFromPosition(childPos, out bool NodeExists);
-                if (NodeExists && path.Contains(childPos))
-                {
-                    node.Steps[turn].Move.WinRate += CorrectionIfRepeat;
-                }
-                else
-                {
-                    double moveWinRate = Solved.Equals(childPos)
-                        ? SolvedEvaluation
-                        : childPos.Evaluation;
-                    Move currMove = new Move(Policy[(int)turn], 0, moveWinRate);
-                    Step currStep = new Step(currMove, childNode);
-                    node.AddStep(turn, currStep);
-                }
-            }
         }
     }
 }

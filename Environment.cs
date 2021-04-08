@@ -17,8 +17,8 @@ namespace CubeAgain
         /// <param name="node">Возвращает узел содержащий позицию</param>
         /// <returns><see langword="true"/> - если возвращён новый узел,
         /// <see langword="false"/> - если возвращён уже имеющийся узел</returns>
-        public static Node NodeFromPosition(Position position) => NodeFromPosition(position, out _);
-        public static Node NodeFromPosition(Position position, out bool exists)
+        public static Node NodeByPosition(Position position) => NodeByPosition(position, out _);
+        public static Node NodeByPosition(Position position, out bool exists)
         {
             Node result;
             exists = PositionsNodes.ContainsKey(position);

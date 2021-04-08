@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using static CubeAgain.Environment;
+using static CubeAgain.Training;
+using static CubeAgain.NeuralNetwork;
 
 namespace CubeAgain
 {
@@ -58,6 +61,31 @@ namespace CubeAgain
             {
                 Steps[turn].Move.Policy = NeuralNetwork.Policy[(int)turn];
             }
+        }
+        public void Expand(Path path)
+        {
+            for (Turns turn = Turns.R; turn <= Turns.F2; turn++)
+            {
+                Position childPos = Position.PosAfterTurn(turn);
+                Node childNode = NodeByPosition(childPos, out bool NodeExists);
+                if (NodeExists && path.Contains(childPos))
+                {
+                    Steps[turn].Move.WinRate += CorrectionIfRepeat;
+                }
+                else
+                {
+                    double moveWinRate = Solved.Equals(childPos)
+                        ? SolvedEvaluation
+                        : childPos.Evaluation;
+                    Move currMove = new Move(Policy[(int)turn], 0, moveWinRate);
+                    Step currStep = new Step(currMove, childNode);
+                    AddStep(turn, currStep);
+                }
+            }
+        }
+        public void Visit()
+        {
+            WasVisited = true;
         }
         public object Clone()
         {

@@ -39,7 +39,7 @@ namespace CubeAgain
             }
             foreach (Step step in Steps)
             {
-                if (step.NextNode.Equals(position))
+                if (step.NextNode.Position.Equals(position))
                 {
                     return true;
                 }
