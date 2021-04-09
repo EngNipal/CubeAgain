@@ -25,13 +25,7 @@ namespace CubeAgain
                 value.CopyTo(temp, 0);
                 inputs = temp;
                 Avg = inputs.Average();
-                StandDeviation = 0.0;
-                foreach (double element in inputs)
-                {
-                    StandDeviation += Math.Pow(element - Avg, 2);
-                }
-                StandDeviation /= NumInputs - 1;
-                StandDeviation = Math.Sqrt(StandDeviation);
+                SetDeviation();
             }
         }
         public double[] Outputs { get; private set; }
@@ -45,7 +39,7 @@ namespace CubeAgain
         /// Метод нормализации выходных данных.
         /// </summary>
         /// <returns></returns>
-        public double[] BatchNormalization() // TODO: Consider to divide in 2 methods. StDev == 0 and StDev != 0 (2021-04-07)
+        public double[] Normalization() // TODO: Consider to divide in 2 methods. StDev == 0 and StDev != 0 (2021-04-07)
         {
             if (0 != StandDeviation)
             {
@@ -94,11 +88,21 @@ namespace CubeAgain
             return result;
         }
         // TODO: Доработать метод BatchNormDerivation (2021-01-17).
-        public static double[] BatchNormDerivation(double[] inputs)
+        public double[] BatchNormDerivation(double[] inputs)
         {
             double[] result = new double[inputs.Length];
 
             return result;
+        }
+        private void SetDeviation()
+        {
+            StandDeviation = 0.0;
+            foreach (double inputvalue in inputs)
+            {
+                StandDeviation += (inputvalue - Avg) * (inputvalue - Avg);
+            }
+            StandDeviation /= NumInputs - 1;
+            StandDeviation = Math.Sqrt(StandDeviation);
         }
     }
 }

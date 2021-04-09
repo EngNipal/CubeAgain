@@ -12,6 +12,7 @@ namespace CubeAgain
         public const double DiscountCoeff = 0.90;
         public const double LearningRate = 0.01;
         public const double RegulCoeff = 0.001;
+        public const double Epsilon = 0.000001;
 
         public const double UnsolvedEvaluation = -1;
         public const double SolvedEvaluation = 100;
@@ -21,8 +22,8 @@ namespace CubeAgain
         private static readonly Dictionary<Position, Dataset> DataBase = new Dictionary<Position, Dataset>();
         // 1 - количество блоков, 2 - нейроны в блоке, 3 - веса конкретного нейрона.
         private static double[][][] NetWeights { get; set; }                    
-        public static double[][] PolicyHeadWeights { get; private set; }
-        public static double[] EvaluationHeadWeights { get; private set; }
+        public static double[][] PolicyHWeights { get; private set; }
+        public static double[] EvalHWeights { get; private set; }
         /// <summary>
         /// Метод, возвращающий индекс максимального элемента
         /// </summary>
@@ -60,17 +61,17 @@ namespace CubeAgain
                     NetWeights[i][j][max] = Blocks[i].FCL.Neurons[j].Bias;
                 }
             }
-            PolicyHeadWeights = new double[HeadPolicy.NumNeurons][];
+            PolicyHWeights = new double[HeadPolicy.NumNeurons][];
             for (int i = 0; i < HeadPolicy.NumNeurons; i++)
             {
                 int max = HeadPolicy.NumInputs;
-                PolicyHeadWeights[i] = new double[max + 1];
-                HeadPolicy.Neurons[i].Weights.CopyTo(PolicyHeadWeights[i], 0);
-                PolicyHeadWeights[i][max] = HeadPolicy.Neurons[i].Bias;
+                PolicyHWeights[i] = new double[max + 1];
+                HeadPolicy.Neurons[i].Weights.CopyTo(PolicyHWeights[i], 0);
+                PolicyHWeights[i][max] = HeadPolicy.Neurons[i].Bias;
             }
-            EvaluationHeadWeights = new double[HeadEval.InputQuantity + 1];
-            HeadEval.Weights.CopyTo(EvaluationHeadWeights, 0);
-            EvaluationHeadWeights[HeadEval.InputQuantity] = HeadEval.Bias;
+            EvalHWeights = new double[HeadEval.InputQuantity + 1];
+            HeadEval.Weights.CopyTo(EvalHWeights, 0);
+            EvalHWeights[HeadEval.InputQuantity] = HeadEval.Bias;
         }
         /// <summary>
         /// Получение тупла по позиции
@@ -113,19 +114,28 @@ namespace CubeAgain
         }
         // *** Корректировка весов ***
         // TODO: Finish that block
-        public static void WeightsCorrection(Dataset[] miniBatch)
+        public static void CorrectNetWeights(Dataset[] miniBatch)
         {
+            
             foreach (Dataset trainSet in miniBatch)
             {
-                double VLoss = trainSet.VLoss;
-                double RLoss = trainSet.RLoss;
-                double PLoss = trainSet.PLoss;
+                HeadEval.CorrectWeights(trainSet.InternalNetOutputs[NumBlocks - 1], trainSet.GradV);
+                //HeadPolicy.CorrectWeights();
+
+                //double diff = 0.0;
+                //double VLoss = trainSet.VLoss;
+                //double RLoss = trainSet.RLoss;
+                //double PLoss = trainSet.PLoss;
+                //double Loss = trainSet.Loss;
+
+
 
                 for (int i = NumBlocks - 1; i >= 0; i--)
                 {
                     //Blocks[i]
                 }
             }
+            
         }
     }
 }

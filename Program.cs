@@ -62,7 +62,7 @@ namespace CubeAgain
                 MiniBatch[i] = (Dataset)CurrDataset.Clone();
             }
 
-            WeightsCorrection(MiniBatch);
+            CorrectNetWeights(MiniBatch);
             
             //WriteState(CurrState);
         }

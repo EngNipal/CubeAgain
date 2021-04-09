@@ -32,6 +32,7 @@ namespace CubeAgain
             Random Rnd = new Random();
             NumInputs = numInputs;
             NumBlocks = numBlocks;
+            int TurnsCount = Enum.GetValues(typeof(Turns)).Length;
             Blocks = new FCL_BNL_Block[numBlocks];
             Blocks[0] = new FCL_BNL_Block(new FCLayer(numInputs, numNeurons[0]));
             for (int i = 1; i < numBlocks; i++)
@@ -42,14 +43,14 @@ namespace CubeAgain
             {
                 Activate[i] += Blocks[i].RELU;
             }
-            HeadPolicy = new FCLayer(numNeurons[numBlocks - 1], 9);
             double[] InitWeights = new double[numNeurons[numBlocks - 1]];
-            for (int j = 0; j < numInputs; j++)
+            HeadPolicy = new FCLayer(InitWeights.Length, TurnsCount);
+            for (int i = 0; i < InitWeights.Length; i++)
             {
-                InitWeights[j] = Rnd.NextDouble();
+                InitWeights[i] = Rnd.NextDouble();
             }
-            HeadEval = new Neuron(numNeurons[numBlocks - 1], InitWeights, Rnd.NextDouble());
-            Policy = new double[Enum.GetValues(typeof(Turns)).Length];
+            HeadEval = new Neuron(InitWeights.Length, InitWeights, Rnd.NextDouble());
+            Policy = new double[TurnsCount];
         }
         /// <summary>
         /// Метод анализа заданной позиции нейросетью.
@@ -61,7 +62,7 @@ namespace CubeAgain
             for (int i = 0; i < NumBlocks; i++)
             {
                 Blocks[i].BNL.Inputs = Blocks[i].FCL.GetOutputs();
-                Activate[i](Blocks[i].BNL.BatchNormalization());
+                Activate[i](Blocks[i].BNL.Normalization());
                 if (i < NumBlocks - 1)
                 {
                     Blocks[i + 1].FCL.Inputs = Blocks[i].Outputs;
@@ -91,7 +92,7 @@ namespace CubeAgain
             double StandDev = 0.0;
             foreach (int element in SomeParams)
             {
-                StandDev += Math.Pow(element - Avg, 2);
+                StandDev += (element - Avg) * (element - Avg);
             }
             StandDev /= SomeParams.Length - 1;
             StandDev = Math.Sqrt(StandDev);

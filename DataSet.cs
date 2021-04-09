@@ -8,7 +8,7 @@ using static CubeAgain.Training;
 
 namespace CubeAgain
 {
-    class Dataset : ICloneable
+    public class Dataset : ICloneable
     {
         public double[] NetInput { get; set; }
         // 1st dimension - block number, 2nd - block output values.
@@ -30,6 +30,7 @@ namespace CubeAgain
         public double PLoss { get; private set; }
         // Должен пойти на HeadEval.
         public double GradV => 2 * (NetScore - Z);
+        public double[] EvalGrad { get; private set; }
         public double Loss => VLoss + RLoss + PLoss;
         private const double Zero = 0.0;
         public Dataset()
@@ -74,6 +75,7 @@ namespace CubeAgain
         {
             RLoss = Zero;
             RLoss += (from block in Blocks select block.FCL.RegSum).Sum();
+            RLoss += HeadPolicy.RegSum + HeadEval.Regsum;
             RLoss *= RegulCoeff;
         }
         private void SetPLoss()

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CubeAgain
 {
-    class FCL_BNL_Block
+    class FCL_BNL_Block : ILayer
     {
         public FCLayer FCL { get; private set; }
         public BNLayer BNL { get; private set; }
@@ -21,7 +21,7 @@ namespace CubeAgain
         /// Активационная функция "Сигмоид".
         /// </summary>
         /// <param name="x"></param>
-        internal void Sigmoid(double[] x)
+        public void Sigmoid(double[] x)
         {
             for (int i = 0; i < x.Length; i++)
             {
@@ -32,12 +32,17 @@ namespace CubeAgain
         /// Активационная функция RELU.
         /// </summary>
         /// <param name="x"></param>
-        internal void RELU(double[] x)
+        public void RELU(double[] x)
         {
             for (int i = 0; i < x.Length; i++)
             {
                 Outputs[i] = x[i] > 0 ? x[i] : 0;
             }
+        }
+        // TODO: Дописать метод.
+        public void CorrectWeights(double[] Xinputs, double[] gradient)
+        {
+
         }
     }
 }

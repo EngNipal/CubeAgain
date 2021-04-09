@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace CubeAgain
 {
-    public class FCLayer
+    public class FCLayer : ILayer
     {
         public FCLayer(int numInputs, int numNeurons)
         {
@@ -13,11 +13,11 @@ namespace CubeAgain
             inputs = new double[numInputs];
             Outputs = new double[numNeurons];
             Neurons = new Neuron[numNeurons];
-            SetWeights(numInputs);
+            SetWeights();
             SetRegsum();
         }
-        public int NumInputs { get; set; }
-        private double[] inputs;
+        public int NumInputs { get; private set; }
+        private double[] inputs { get; set; }
         public double[] Inputs
         {
             get { return inputs; }
@@ -30,11 +30,12 @@ namespace CubeAgain
                 value.CopyTo(inputs, 0);
             }
         }
-        public double[] Outputs { get; private set; }
         public double RegSum { get; private set; }
         public int NumNeurons { get; private set; }
-        public Neuron[] Neurons;
-        public double[] GetOutputs()
+        public Neuron[] Neurons { get; private set; }
+        public double[] GradToInput { get; private set; }
+        private double[] Outputs { get; set; }
+        public double[] GetOutputs()                            // TODO: проверить уязвимость поля Outputs при передаче из метода наружу (2021-04-09).
         {
             for(int i = 0; i < NumNeurons; i++)
             {
@@ -43,35 +44,25 @@ namespace CubeAgain
             return Outputs;
         }
         // Метод корректировки весов нейронов слоя.
-        // !!!!! Нужно очень грамотно собрать вектор градиента !!!!!
-        // TODO: Определиться с корректировкой весов. Доработать метод.
-        internal void CorrectWeights(double[] gradfrom)
+        public void CorrectWeights(double[] Xinputs, double[] gradient)
         {
-            int i = 0;
-            foreach (Neuron neuron in Neurons)
+            GradToInput = new double[NumInputs];
+            if (gradient.Length != NumNeurons)
             {
-                // Для функции сигмоида.
-                //for (int j = 0; j < neuron.InputQuantity; j++)
-                //{
-                //    neuron.Weights[j] -= layer.Inputs[j] * neuron.Output * (1 - neuron.Output) * gradfrom[i] * LearningRate;
-                //    // Ниже - ещё один способ записать корректировку.
-                //    //neuron.Weights[j] -= layer.Inputs[j] * neuron.Output * (1 - neuron.Output) * gradfrom[Array.IndexOf(layer.Neurons, neuron)] * LearningRate;
-                //}
-
-                // Для функции RELU.
-                for (int j = 0; j < neuron.InputQuantity; j++)
+                throw new Exception("Неверная длина градиента для FCLayer.");
+            }
+            for (int i = 0; i < NumNeurons; i++)
+            {
+                Neurons[i].CorrectWeights(Xinputs, gradient[i]);
+                for (int j = 0; j < NumInputs; j++)
                 {
-                    if (neuron.GetOutput() >= 0)
-                    {
-                        neuron.Weights[j] -= Inputs[j] * neuron.GetOutput() * gradfrom[i] * Training.LearningRate;
-                    }
+                    GradToInput[j] += Neurons[i].GradToInput[j];        // Это абсолютно правильно! (2021-04-09).
                 }
-                i++;
             }
         }
-        private void SetWeights(int numInputs)
+        private void SetWeights()
         {
-            double[] InitWeights = new double[numInputs];
+            double[] InitWeights = new double[NumInputs];
             for (int i = 0; i < NumNeurons; i++)
             {
                 for (int j = 0; j < NumInputs; j++)
@@ -83,9 +74,9 @@ namespace CubeAgain
         }
         private void SetRegsum()
         {
-            for (int i = 0; i < NumNeurons; i++)
+            foreach (Neuron neuron in Neurons)
             {
-                RegSum = Neurons[i].Weights.Sum(elem => elem * elem) + (Neurons[i].Bias * Neurons[i].Bias);
+                RegSum += neuron.Regsum;
             }
         }
         private readonly Random Rnd = new Random();
