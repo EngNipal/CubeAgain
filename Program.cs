@@ -10,6 +10,7 @@ namespace CubeAgain
     
     class Program
     {
+        // TODO: Write tests for solution methods (2021-04-16).
         private static readonly Random Rnd = new Random();
         internal static Position CurrPos { get; set; }
         private static Node CurrNode { get; set; }
