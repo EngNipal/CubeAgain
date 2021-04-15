@@ -9,7 +9,7 @@ namespace CubeAgain
 {
     static class Training
     {
-        public const double DiscountCoeff = 0.90;
+        public const double DiscountCoeff = 0.95;
         public const double LearningRate = 0.01;
         public const double RegulCoeff = 0.001;
         public const double Epsilon = 0.000001;
@@ -19,11 +19,13 @@ namespace CubeAgain
         public const int CorrectionIfRepeat = -1;
         public const int MaxNodes = 1024;
 
-        private static readonly Dictionary<Position, Dataset> DataBase = new Dictionary<Position, Dataset>();
+        private static readonly int NumOfTurns = Enum.GetValues(typeof(Turns)).Length;
+
+        private static readonly Dictionary<Position, Dataset> TrainBase = new Dictionary<Position, Dataset>();
         // 1 - количество блоков, 2 - нейроны в блоке, 3 - веса конкретного нейрона.
-        private static double[][][] NetWeights { get; set; }                    
-        public static double[][] PolicyHWeights { get; private set; }
-        public static double[] EvalHWeights { get; private set; }
+        //private static double[][][] NetWeights { get; set; }                    
+        //public static double[][] PolicyHWeights { get; private set; }
+        //public static double[] EvalHWeights { get; private set; }
         /// <summary>
         /// Метод, возвращающий индекс максимального элемента
         /// </summary>
@@ -31,6 +33,10 @@ namespace CubeAgain
         /// <returns> Ход, соответствующий индексу максимального элемента </returns>
         public static Turns Argmax(double[] somePolicy)
         {
+            if (somePolicy.Length != NumOfTurns)
+            {
+                throw new Exception("Количество элементов Policy не соответствует количеству возможных ходов.");
+            }
             Turns result = Turns.R;
             double max = double.MinValue;
             for (int i = 0; i < somePolicy.Length; i++)
@@ -47,44 +53,44 @@ namespace CubeAgain
         /// Запоминает текущие веса нейросети в полях Training,
         /// чтобы использовать их при дальнейшей корректировке весов.
         /// </summary>
-        internal static void SaveNetWeights()
-        {
-            NetWeights = new double[NumBlocks][][];
-            for (int i = 0; i < NumBlocks; i++)
-            {
-                NetWeights[i] = new double[Blocks[i].FCL.NumNeurons][];
-                for (int j = 0; j < Blocks[i].FCL.NumNeurons; j++)
-                {
-                    int max = Blocks[i].FCL.NumInputs;
-                    NetWeights[i][j] = new double[max + 1];
-                    Blocks[i].FCL.Neurons[j].Weights.CopyTo(NetWeights[i][j], 0);
-                    NetWeights[i][j][max] = Blocks[i].FCL.Neurons[j].Bias;
-                }
-            }
-            PolicyHWeights = new double[HeadPolicy.NumNeurons][];
-            for (int i = 0; i < HeadPolicy.NumNeurons; i++)
-            {
-                int max = HeadPolicy.NumInputs;
-                PolicyHWeights[i] = new double[max + 1];
-                HeadPolicy.Neurons[i].Weights.CopyTo(PolicyHWeights[i], 0);
-                PolicyHWeights[i][max] = HeadPolicy.Neurons[i].Bias;
-            }
-            EvalHWeights = new double[HeadEval.InputQuantity + 1];
-            HeadEval.Weights.CopyTo(EvalHWeights, 0);
-            EvalHWeights[HeadEval.InputQuantity] = HeadEval.Bias;
-        }
+        //internal static void SaveNetWeights()
+        //{
+        //    NetWeights = new double[NumBlocks][][];
+        //    for (int i = 0; i < NumBlocks; i++)
+        //    {
+        //        NetWeights[i] = new double[Blocks[i].FCL.NumNeurons][];
+        //        for (int j = 0; j < Blocks[i].FCL.NumNeurons; j++)
+        //        {
+        //            int max = Blocks[i].FCL.NumInputs;
+        //            NetWeights[i][j] = new double[max + 1];
+        //            Blocks[i].FCL.Neurons[j].Weights.CopyTo(NetWeights[i][j], 0);
+        //            NetWeights[i][j][max] = Blocks[i].FCL.Neurons[j].Bias;
+        //        }
+        //    }
+        //    PolicyHWeights = new double[HeadPolicy.NumNeurons][];
+        //    for (int i = 0; i < HeadPolicy.NumNeurons; i++)
+        //    {
+        //        int max = HeadPolicy.NumInputs;
+        //        PolicyHWeights[i] = new double[max + 1];
+        //        HeadPolicy.Neurons[i].Weights.CopyTo(PolicyHWeights[i], 0);
+        //        PolicyHWeights[i][max] = HeadPolicy.Neurons[i].Bias;
+        //    }
+        //    EvalHWeights = new double[HeadEval.NumInputs + 1];
+        //    HeadEval.Weights.CopyTo(EvalHWeights, 0);
+        //    EvalHWeights[HeadEval.NumInputs] = HeadEval.Bias;
+        //}
         /// <summary>
         /// Получение тупла по позиции
         /// </summary>
         /// <param name="position"></param>
         /// <returns>Новый или существующий тупл, согласно позиции</returns>
-        public static Dataset GetDatasetByPos(Position position)
+        public static Dataset DatasetByPos(Position position)
         {
-            if (!DataBase.ContainsKey(position))
+            if (!TrainBase.ContainsKey(position))
             {
                 AddDataset(position);
             }
-            return DataBase[position];
+            return TrainBase[position];
         }
         /// <summary>
         /// Добавляет новый тупл в базу.
@@ -93,7 +99,7 @@ namespace CubeAgain
         public static void AddDataset(Position position)
         {
             // Код ниже работает правильно. Передача чисел командой "CopyTo" проверена в "песочнице".
-            if (DataBase.ContainsKey(position))
+            if (TrainBase.ContainsKey(position) && !position.Equals(Program.CurrPos))
             {
                 throw new Exception("Такой набор уже существует! Набор не был добавлен.");
             }
@@ -101,25 +107,18 @@ namespace CubeAgain
             {
                 Dataset newSet = new Dataset();
                 Blocks[0].FCL.Inputs.CopyTo(newSet.NetInput, 0);
-                for (int i = 0; i < Blocks.Length; i++)
-                {
-                    Blocks[i].Outputs.CopyTo(newSet.InternalNetOutputs[i], 0);
-                    newSet.StandDev[i] = Blocks[i].BNL.StandDeviation;
-                }
                 Policy.CopyTo(newSet.NetPolicy, 0);
-                newSet.NetScore = position.Evaluation;
-                newSet.Reward = 0;
-                DataBase.Add(position, newSet);
+                newSet.NetEval = position.Evaluation;
+                TrainBase.Add(position, newSet);
             }
         }
         // *** Корректировка весов ***
         // TODO: Finish that block
         public static void CorrectNetWeights(Dataset[] miniBatch)
         {
-            
             foreach (Dataset trainSet in miniBatch)
             {
-                HeadEval.CorrectWeights(trainSet.InternalNetOutputs[NumBlocks - 1], trainSet.GradV);
+                //HeadEval.CorrectWeights(trainSet.BlockOutputs[NumBlocks - 1], trainSet.GradV);
                 //HeadPolicy.CorrectWeights();
 
                 //double diff = 0.0;
@@ -135,7 +134,7 @@ namespace CubeAgain
                     //Blocks[i]
                 }
             }
-            
+            TrainBase.Clear();
         }
     }
 }

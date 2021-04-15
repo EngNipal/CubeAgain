@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CubeAgain
 {
-    class FCL_BNL_Block : ILayer
+    public class FCL_BNL_Block
     {
         public FCLayer FCL { get; private set; }
         public BNLayer BNL { get; private set; }
@@ -39,10 +39,30 @@ namespace CubeAgain
                 Outputs[i] = x[i] > 0 ? x[i] : 0;
             }
         }
-        // TODO: Дописать метод.
-        public void CorrectWeights(double[] Xinputs, double[] gradient)
-        {
+        // TODO: Дописать метод (2021-04-10).
+        //public void CorrectWeightsIfRelu(double[] Xinputs, double[] fclOut, double[] gradient, double stdev, double avg)
+        //{
+        //    if (gradient.Length != Outputs.Length)
+        //    {
+        //        throw new Exception("Неверная длина градиента для блока.");
+        //    }
+        //    BNL.SetGradToInput(fclOut, gradient, stdev, avg);
+        //    FCL.CorrectWeights(Xinputs, BNL.GradToInput);
+        //}
+        //public void CorrectWeightsIfSigmoid(double[] Xinputs, double[] fclOut, double[] bnlOut, double[] gradient, double stdev, double avg)
+        //{
+        //    if (gradient.Length != Outputs.Length)
+        //    {
+        //        throw new Exception("Неверная длина градиента для блока.");
+        //    }
+        //    BNL.SetGradToInput(fclOut, SigmoidGradient(bnlOut, gradient), stdev, avg);
+        //    FCL.CorrectWeights(Xinputs, BNL.GradToInput);
+        //}
+        //// TODO: Доработать метод.
+        //private double[] SigmoidGradient(double[] bnlOut, double[] outergradient)
+        //{
+        //    double[] result = new double[Outputs.Length];
 
-        }
+        //}
     }
 }

@@ -11,7 +11,7 @@ namespace CubeAgain
     class Program
     {
         private static readonly Random Rnd = new Random();
-        private static Position CurrPos { get; set; }
+        internal static Position CurrPos { get; set; }
         private static Node CurrNode { get; set; }
         private static Path GamePath { get; set; }
         /// <summary>
@@ -31,7 +31,7 @@ namespace CubeAgain
         {
             IEnumerable<int> CurrState = SetSolved();
             SetNetworkStructure();
-            SaveNetWeights();
+            //SaveNetWeights();
             Analyzed += AddDataset;
             SetScramble(CurrState, Rnd.Next(MinScrLength, MaxScrLength), out Turns[] NewScramble);
             CurrPos = new Position(CurrState);
@@ -42,14 +42,16 @@ namespace CubeAgain
             for (int i = 0; i < TrainDatasetVolume; i++)
             {
                 double[] ImprovedPolicy = ProbDistrib(CurrNode);
-                Dataset CurrDataset = GetDatasetByPos(CurrPos);
+                Dataset CurrDataset = DatasetByPos(CurrPos);
                 CurrDataset.CompleteUnsolved(ImprovedPolicy, GamePath.Length);
+                // TODO: Не выбирать максимальный, а вероятностно брать ход из полученной improved policy (2021-04-12).
                 Turns BestNetworkTurn = Argmax(ImprovedPolicy);
                 GamePath.AddStep(CurrNode.Steps[BestNetworkTurn]);
                 CurrPos = CurrPos.PosAfterTurn(BestNetworkTurn);
                 CurrNode = NodeByPosition(CurrPos);
                 if (Solved.Equals(CurrPos))
                 {
+                    // TODO: Обновить все датасеты, согласно GamePath - указать истинное кол-во ходов, которое потребовалось для достижения solved position (2021-04-12).
                     CurrDataset.CompleteSolved();
                     CurrState = SetSolved();
                     SetScramble(CurrState, Rnd.Next(MinScrLength, MaxScrLength));
@@ -95,7 +97,7 @@ namespace CubeAgain
             double[] result = new double[HeadPolicy.NumNeurons];
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = startNode.Steps[(Turns)i].Move.Visit;                     // TODO: Уточнить как именно выбирается ход. Лекция 14
+                result[i] = startNode.Steps[(Turns)i].Move.Visit;       // TODO: Уточнить как именно считается распределение "пи" Лекция 14 и статья.
             }
             return result;
         }

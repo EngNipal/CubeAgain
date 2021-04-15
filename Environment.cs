@@ -324,13 +324,7 @@ namespace CubeAgain
                     }
                 }
             }
-            // TODO: Выяснить как преобразовать массив int в соответствующие значения Enum без цикла. (2020-12-30)
-            // Пока что работает так.
-            Turns[] res = new Turns[scrLength];
-            for (int i=0; i<scrLength; i++)
-            {
-                res[i] = (Turns)scArray[i];
-            }
+            Turns[] res = (Turns[])scArray.Cast<Turns>();
             return res;
         }
         /// <summary>

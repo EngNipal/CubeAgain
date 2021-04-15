@@ -61,7 +61,7 @@ namespace CubeAgain
             Blocks[0].FCL.Inputs = Preprocessing(position.State);
             for (int i = 0; i < NumBlocks; i++)
             {
-                Blocks[i].BNL.Inputs = Blocks[i].FCL.GetOutputs();
+                Blocks[i].BNL.Inputs = Blocks[i].FCL.Outputs;
                 Activate[i](Blocks[i].BNL.Normalization());
                 if (i < NumBlocks - 1)
                 {
@@ -69,9 +69,10 @@ namespace CubeAgain
                 }
             }
             HeadPolicy.Inputs = Blocks[NumBlocks - 1].Outputs;
-            Evaluation = HeadEval.GetOutput(Blocks[NumBlocks - 1].Outputs);
-            HeadPolicy.GetOutputs().CopyTo(Policy, 0);
+            HeadPolicy.Outputs.CopyTo(Policy, 0);
             Policy = SoftMax(Policy);
+            HeadEval.Inputs = Blocks[NumBlocks - 1].Outputs;
+            Evaluation = HeadEval.Output;
             position.Evaluation = Evaluation;
             Analyzed?.Invoke(position);
         }
@@ -111,6 +112,18 @@ namespace CubeAgain
                 }
             }
             return result;
+        }
+        public static void CalculateGradients(double ProperEvaluation, double[] ProperPolicy )
+        {
+            Analyze(Program.CurrPos);                                       // - Обязательно для правильного вычисления градиентов.
+            double EvalGrad = 2 * (HeadEval.Output - ProperEvaluation);     // - Верно.
+            HeadEval.SetGradients(EvalGrad);
+
+            // TODO: Подсчитать градиент от Softmax-a и передать его в HeadPolicy.
+
+            HeadPolicy.SetGradToInput(ProperPolicy);
+
+            // TODO: Градиент к последнему блоку равен сумме градиентов, идущих от "голов".
         }
     }
 }

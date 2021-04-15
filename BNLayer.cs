@@ -3,15 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static CubeAgain.Training;
 
 namespace CubeAgain
 {
-    class BNLayer
+    public class BNLayer
     {
-        private int NumInputs { get; set; }
-        public double Avg { get; private set; }
-        public double StandDeviation { get; private set; }
-        private double[] inputs;
+        private double[] inputs { get; set; }
         public double[] Inputs
         {
             get => inputs;
@@ -28,7 +26,11 @@ namespace CubeAgain
                 SetDeviation();
             }
         }
-        public double[] Outputs { get; private set; }
+        public double[] GradToInput { get; private set; }
+        private int NumInputs { get; set; }
+        private double Avg { get; set; }
+        private double StandDeviation { get; set; }
+        private double[] Outputs { get; set; }
         public BNLayer(int numInputs)
         {
             NumInputs = numInputs;
@@ -39,7 +41,7 @@ namespace CubeAgain
         /// Метод нормализации выходных данных.
         /// </summary>
         /// <returns></returns>
-        public double[] Normalization() // TODO: Consider to divide in 2 methods. StDev == 0 and StDev != 0 (2021-04-07)
+        public double[] Normalization()
         {
             if (0 != StandDeviation)
             {
@@ -63,36 +65,40 @@ namespace CubeAgain
         /// <param name="stDev"></param>
         /// <returns></returns>
         // Do not delete. The code calling that method is not written yet.
-        // TODO: Consider to divide in 2 methods (2021-04-07)
         // Не удалять! Часть кода, вызывающая данный метод ещё не написана.
-        public double[] Gradiend(double stDev)
+        public void SetGradToInput(double[] Xinputs, double[] gradient, double stDev, double avg)
         {
-            double[] result = new double[NumInputs];
+            GradToInput = new double[NumInputs];
             if (0 != stDev)
             {
                 double FirstConst = (NumInputs - 1) / (NumInputs * stDev);
                 double SecondConst = Math.Pow(stDev, 3) * (NumInputs - 1);
                 for (int i = 0; i < NumInputs; i++)
                 {
-                    result[i] = FirstConst;
-                    result[i] -= Math.Pow(Inputs[i] - Avg, 2) / SecondConst;
+                    GradToInput[i] = FirstConst;
+                    GradToInput[i] -= Math.Pow(Inputs[i] - avg, 2) / SecondConst;
+                    GradToInput[i] *= gradient[i] * Xinputs[i];
                 }
             }
             else
             {
                 for (int i = 0; i < NumInputs; i++)
                 {
-                    result[i] = 1 - (1 / NumInputs);
+                    GradToInput[i] = 1 - (1 / NumInputs);
+                    GradToInput[i] *= gradient[i] * Xinputs[i];
                 }
             }
-            return result;
+            ImproveGradient();
         }
-        // TODO: Доработать метод BatchNormDerivation (2021-01-17).
-        public double[] BatchNormDerivation(double[] inputs)
+        private void ImproveGradient()
         {
-            double[] result = new double[inputs.Length];
-
-            return result;
+            for (int i = 0; i < GradToInput.Length; i++)
+            {
+                if (Math.Abs(GradToInput[i]) < Epsilon)
+                {
+                    GradToInput[i] = 0;
+                }
+            }
         }
         private void SetDeviation()
         {

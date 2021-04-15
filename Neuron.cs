@@ -7,80 +7,112 @@ namespace CubeAgain
 {
     public class Neuron
     {
-        public Neuron(int numInputs, double[] weights, double bias)
-        {
-            InputQuantity = numInputs;
-            this.weights = new double[numInputs];
-            Weights = weights;
-            Bias = bias;
-            Output = 0.0;
-        }
-        public int InputQuantity { get; private set; }
-        private bool WeightsChanged { get; set; }
+        public int NumInputs { get; private set; }
         private double[] weights { get; set; }
         public double[] Weights
         {
             get => weights;
             set
             {
-                if (InputQuantity != value.Length)
+                if (NumInputs != value.Length)
                 {
                     throw new Exception("Неверная длина входных weights в Neuron");
                 }
-                value.CopyTo(weights, 0);                  // TODO: Проверить, так ли нужно копирование значений. Или можно обойтись присвоением (2021-04-03)
+                value.CopyTo(weights, 0);
                 SetRegsum();
-                WeightsChanged = true;
+                SetOutput();
             }
         }
-        public double Bias { get; set; }
+        public double Bias { get; private set; }
         public double Regsum { get; private set; }
-        private double Output { get; set; }
-        public double[] GradToInput { get; private set; }
-        /// <summary>
-        /// Метод получения выходного значения нейрона.
-        /// </summary>
-        /// <returns></returns>
-        public double GetOutput()
+        private double[] inputs { get; set; }
+        public double[] Inputs
         {
-            if (WeightsChanged)
+            get => inputs;
+            set
             {
-                throw new Exception("Веса нейрона изменились. Требуется массив входных значений.");
-            }
-            return Output;
-        }
-        public double GetOutput(double[] inputs)
-        {
-            Output = 0.0;
-            if (WeightsChanged)
-            {
-                for (int i = 0; i < InputQuantity; i++)
+                if (NumInputs != value.Length)
                 {
-                    Output += Weights[i] * inputs[i];
+                    throw new Exception("Неверная длина входных inputs в Neuron");
                 }
-                Output += Bias;
+                value.CopyTo(inputs, 0);
+                SetOutput();
             }
-            WeightsChanged = false;
-            return Output;
+        }
+        public double Output { get; private set; }
+        public double[] GradToInputs { get; private set; }
+        public double[] GradToWeights { get; private set; }
+        public Neuron(int numInputs, double[] weights, double bias)
+        {
+            NumInputs = numInputs;
+            inputs = new double[numInputs];
+            this.weights = new double[numInputs];
+            Weights = weights;
+            Bias = bias;
         }
         // Для нейрона получаем значение ошибки на выходе и массив входных значений (какие были значения когда-то).
-        public void CorrectWeights(double[] Xinput, double grad)
+        //public void CorrectWeights(double[] Xinput, double grad)
+        //{
+        //    GradToInput = new double[InputQuantity];
+        //    if (Xinput.Length != weights.Length)
+        //    {
+        //        throw new Exception("Неверная длина входного градиента в нейроне");
+        //    }
+        //    for (int i = 0; i < InputQuantity; i++)
+        //    {
+        //        GradToInput[i] = weights[i] * grad;
+        //        weights[i] -= ((Xinput[i] * grad) + (2 * RegulCoeff * weights[i])) * LearningRate;
+        //    }
+        //    Bias -= (grad + (2 * RegulCoeff * Bias)) * LearningRate;
+        //    ImproveGradient();
+        //    WeightsChanged = true;
+        //}
+        public void SetGradients(double gradient)
         {
-            GradToInput = new double[InputQuantity];
-            if (Xinput.Length != weights.Length)
+            SetGradToWeights(gradient);
+            SetGradToInputs(gradient);
+        }
+        private void SetGradToInputs(double grad)
+        {
+            GradToInputs = new double[NumInputs];
+            for (int i = 0; i < NumInputs; i++)
             {
-                throw new Exception("Неверная длина входного градиента в нейроне");
+                GradToInputs[i] = weights[i] * grad;
             }
-            for (int i = 0; i < InputQuantity; i++)
+            ImproveGradient(GradToInputs);
+        }
+        private void SetGradToWeights(double grad)
+        {
+            GradToWeights = new double[weights.Length + 1];
+            for (int i = 0; i < weights.Length; i++)
             {
-                GradToInput[i] = weights[i] * grad;
-                weights[i] -= ((Xinput[i] * grad) + (2 * RegulCoeff * weights[i])) * LearningRate;
+                GradToWeights[i] = (inputs[i] * grad) + (2 * RegulCoeff * weights[i]);
             }
-            Bias -= (grad + (2 * RegulCoeff * Bias)) * LearningRate;
-            WeightsChanged = true;
+            GradToWeights[weights.Length] = grad + (2 * RegulCoeff * Bias);
+            ImproveGradient(GradToWeights);
+        }
+        private void ImproveGradient(double[] gradient)
+        {
+            for (int i = 0; i < gradient.Length; i++)
+            {
+                if (Math.Abs(gradient[i]) < Epsilon)
+                {
+                    gradient[i] = 0;
+                }
+            }
         }
         private void SetRegsum()
         {
             Regsum = Weights.Sum(elem => elem * elem) + (Bias * Bias);
+        }
+        private void SetOutput()
+        {
+            Output = 0.0;
+            for (int i = 0; i < NumInputs; i++)
+            {
+                Output += Weights[i] * inputs[i];
+            }
+            Output += Bias;
         }
     }
 }

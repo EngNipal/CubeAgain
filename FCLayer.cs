@@ -1,22 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using static CubeAgain.Training;
 
 namespace CubeAgain
 {
-    public class FCLayer : ILayer
+    public class FCLayer
     {
-        public FCLayer(int numInputs, int numNeurons)
-        {
-            NumInputs = numInputs;
-            NumNeurons = numNeurons;
-            inputs = new double[numInputs];
-            Outputs = new double[numNeurons];
-            Neurons = new Neuron[numNeurons];
-            SetWeights();
-            SetRegsum();
-        }
-        public int NumInputs { get; private set; }
         private double[] inputs { get; set; }
         public double[] Inputs
         {
@@ -28,35 +18,86 @@ namespace CubeAgain
                     throw new Exception("Неверная длина входных параметров в FCLayer.Inputs");
                 }
                 value.CopyTo(inputs, 0);
+                SetNeurInputs();
+                SetOutputs();
             }
         }
         public double RegSum { get; private set; }
         public int NumNeurons { get; private set; }
-        public Neuron[] Neurons { get; private set; }
-        public double[] GradToInput { get; private set; }
-        private double[] Outputs { get; set; }
-        public double[] GetOutputs()                            // TODO: проверить уязвимость поля Outputs при передаче из метода наружу (2021-04-09).
+        public double[] GradToInputs { get; private set; }
+        public double[][] GradToWeights { get; private set; }
+        public double[] Outputs { get; private set; }
+        private int NumInputs { get; set; }
+        private Neuron[] Neurons { get; set; }
+        private readonly Random Rnd = new Random();
+        public FCLayer(int numInputs, int numNeurons)
         {
-            for(int i = 0; i < NumNeurons; i++)
-            {
-                Outputs[i] = Neurons[i].GetOutput(Inputs);
-            }
-            return Outputs;
+            NumInputs = numInputs;
+            NumNeurons = numNeurons;
+            inputs = new double[numInputs];
+            Outputs = new double[numNeurons];
+            Neurons = new Neuron[numNeurons];
+            SetWeights();
+            SetRegsum();
         }
         // Метод корректировки весов нейронов слоя.
-        public void CorrectWeights(double[] Xinputs, double[] gradient)
+        //public void CorrectWeights(double[] Xinputs, double[] gradient)
+        //{
+        //    GradToInput = new double[NumInputs];
+        //    if (gradient.Length != NumNeurons)
+        //    {
+        //        throw new Exception("Неверная длина градиента для FCLayer.");
+        //    }
+        //    for (int i = 0; i < NumNeurons; i++)
+        //    {
+        //        Neurons[i].CorrectWeights(Xinputs, gradient[i]);
+        //        for (int j = 0; j < NumInputs; j++)
+        //        {
+        //            GradToInput[j] += Neurons[i].GradToInput[j];        // Это абсолютно правильно! (2021-04-09).
+        //        }
+        //    }
+        //    ImproveGradient();
+        //}
+        public void SetGradToInput(double[] gradient)
         {
-            GradToInput = new double[NumInputs];
+            GradToInputs = new double[NumInputs];
             if (gradient.Length != NumNeurons)
             {
                 throw new Exception("Неверная длина градиента для FCLayer.");
             }
             for (int i = 0; i < NumNeurons; i++)
             {
-                Neurons[i].CorrectWeights(Xinputs, gradient[i]);
                 for (int j = 0; j < NumInputs; j++)
                 {
-                    GradToInput[j] += Neurons[i].GradToInput[j];        // Это абсолютно правильно! (2021-04-09).
+                    GradToInputs[j] += Neurons[i].GradToInputs[j];        // Это абсолютно правильно! (2021-04-09).
+                }
+            }
+            ImproveGradient(GradToInputs);
+        }
+        // TODO: Проверить, что градиент собран правильно.
+        public void SetGradToWeights(double[] gradient)
+        {
+            if (gradient.Length != NumNeurons)
+            {
+                throw new Exception("Неверная длина градиента для FCLayer.");
+            }
+            GradToWeights = new double[NumNeurons][];
+            for (int i = 0; i < NumNeurons; i++)
+            {
+                GradToWeights[i] = new double[NumInputs];
+                for (int j = 0; j < NumInputs; j++)
+                {
+                    GradToWeights[i][j] = gradient[i] * inputs[j] + 2 * RegulCoeff * Neurons[i].Weights[j];
+                }
+            }
+        }
+        private void ImproveGradient(double[] gradient)
+        {
+            for (int i = 0; i < gradient.Length; i++)
+            {
+                if (Math.Abs(gradient[i]) < Epsilon)
+                {
+                    gradient[i] = 0;
                 }
             }
         }
@@ -79,6 +120,19 @@ namespace CubeAgain
                 RegSum += neuron.Regsum;
             }
         }
-        private readonly Random Rnd = new Random();
+        private void SetNeurInputs()
+        {
+            foreach (Neuron neuron in Neurons)
+            {
+                neuron.Inputs = inputs;
+            }
+        }
+        private void SetOutputs()
+        {
+            for (int i = 0; i < NumNeurons; i++)
+            {
+                Outputs[i] = Neurons[i].Output;
+            }
+        }
     }
 }
