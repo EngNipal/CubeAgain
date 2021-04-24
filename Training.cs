@@ -21,22 +21,20 @@ namespace CubeAgain
 
         private static readonly int NumOfTurns = Enum.GetValues(typeof(Turns)).Length;
 
-        private static readonly Dictionary<Position, Dataset> TrainBase = new Dictionary<Position, Dataset>();
+        private static readonly Dictionary<Position, Dataset> Base = new Dictionary<Position, Dataset>();
         // 1 - количество блоков, 2 - нейроны в блоке, 3 - веса конкретного нейрона.
         //private static double[][][] NetWeights { get; set; }                    
         //public static double[][] PolicyHWeights { get; private set; }
         //public static double[] EvalHWeights { get; private set; }
         /// <summary>
-        /// Метод, возвращающий индекс максимального элемента
+        /// Метод, выбирающий лучший ход из распределения.
+        /// Ход с максимальным количеством посещений.
         /// </summary>
         /// <param name="somePolicy"> входной массив</param>
         /// <returns> Ход, соответствующий индексу максимального элемента </returns>
-        public static Turns Argmax(double[] somePolicy)
+        public static Turns GetTurnByMax(double[] somePolicy)
         {
-            if (somePolicy.Length != NumOfTurns)
-            {
-                throw new Exception("Количество элементов Policy не соответствует количеству возможных ходов.");
-            }
+            CheckPolicyLength(somePolicy);
             Turns result = Turns.R;
             double max = double.MinValue;
             for (int i = 0; i < somePolicy.Length; i++)
@@ -46,6 +44,46 @@ namespace CubeAgain
                     max = somePolicy[i];
                     result = (Turns)i;
                 }
+            }
+            return result;
+        }
+        /// <summary>
+        /// Метод, выбирающий ход из распределения случайным образом.
+        /// </summary>
+        /// <param name="somePolicy"></param>
+        /// <returns></returns>
+        public static Turns GetTurnByDistrib(double[] somePolicy)
+        {
+            CheckPolicyLength(somePolicy);
+            double[] temp = Normalize(somePolicy);
+            Turns result = Turns.R;
+            var rnd = new Random().NextDouble();
+            double sum = 0;
+            for (int i = 0; i < temp.Length; i++)
+            {
+                sum += temp[i];
+                if (sum > rnd)
+                {
+                    result = (Turns)i;
+                    break;
+                }
+            }
+            return result;
+        }
+        private static void CheckPolicyLength(double[] somePolicy)
+        {
+            if (somePolicy.Length != NumOfTurns)
+            {
+                throw new Exception("Количество элементов Policy не соответствует количеству возможных ходов.");
+            }
+        }
+        private static double[] Normalize(double[] array)
+        {
+            double sum = array.Sum();
+            double[] result = new double[array.Length];
+            for (int i = 0; i < array.Length; i++)
+            {
+                result[i] = array[i] / sum;
             }
             return result;
         }
@@ -86,11 +124,11 @@ namespace CubeAgain
         /// <returns>Новый или существующий тупл, согласно позиции</returns>
         public static Dataset DatasetByPos(Position position)
         {
-            if (!TrainBase.ContainsKey(position))
+            if (!Base.ContainsKey(position))
             {
                 AddDataset(position);
             }
-            return TrainBase[position];
+            return Base[position];
         }
         /// <summary>
         /// Добавляет новый тупл в базу.
@@ -99,7 +137,7 @@ namespace CubeAgain
         public static void AddDataset(Position position)
         {
             // Код ниже работает правильно. Передача чисел командой "CopyTo" проверена в "песочнице".
-            if (TrainBase.ContainsKey(position) && !position.Equals(Program.CurrPos))
+            if (Base.ContainsKey(position) && !position.Equals(Program.CurrPos))
             {
                 throw new Exception("Такой набор уже существует! Набор не был добавлен.");
             }
@@ -109,11 +147,11 @@ namespace CubeAgain
                 Blocks[0].FCL.Inputs.CopyTo(newSet.NetInput, 0);
                 Policy.CopyTo(newSet.NetPolicy, 0);
                 newSet.NetEval = position.Evaluation;
-                TrainBase.Add(position, newSet);
+                Base.Add(position, newSet);
             }
         }
         // *** Корректировка весов ***
-        // TODO: Finish that block
+        // TODO: Finish that block. Should be in NN.
         public static void CorrectNetWeights(Dataset[] miniBatch)
         {
             foreach (Dataset trainSet in miniBatch)
@@ -134,7 +172,7 @@ namespace CubeAgain
                     //Blocks[i]
                 }
             }
-            TrainBase.Clear();
+            Base.Clear();
         }
     }
 }

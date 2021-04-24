@@ -45,8 +45,7 @@ namespace CubeAgain
                 double[] ImprovedPolicy = ProbDistrib(CurrNode);
                 Dataset CurrDataset = DatasetByPos(CurrPos);
                 CurrDataset.CompleteUnsolved(ImprovedPolicy, GamePath.Length);
-                // TODO: Не выбирать максимальный, а вероятностно брать ход из полученной improved policy (2021-04-12).
-                Turns BestNetworkTurn = Argmax(ImprovedPolicy);
+                Turns BestNetworkTurn = GetTurnByDistrib(ImprovedPolicy);
                 GamePath.AddStep(CurrNode.Steps[BestNetworkTurn]);
                 CurrPos = CurrPos.PosAfterTurn(BestNetworkTurn);
                 CurrNode = NodeByPosition(CurrPos);
