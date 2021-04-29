@@ -267,7 +267,7 @@ namespace CubeAgain
             {
                 Console.Write(element + " ");
             }
-            _ = Console.ReadKey();
+            Console.ReadKey(true);
         }
         /// <summary>
         /// Метод, скрамблящий куб заданным скрамблом.

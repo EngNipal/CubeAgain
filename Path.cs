@@ -20,10 +20,8 @@ namespace CubeAgain
             {
                 throw new ArgumentNullException("Получен пустой шаг при добавлении шага в путь.");
             }
-            else
-            {
-                Steps.Add(step);
-            }
+            
+            Steps.Add(step);
         }
         /// <summary>
         /// Проверяет наличие позиции в пути.
@@ -37,6 +35,7 @@ namespace CubeAgain
             {
                 return true;
             }
+
             foreach (Step step in Steps)
             {
                 if (step.NextNode.Position.Equals(position))
@@ -44,6 +43,7 @@ namespace CubeAgain
                     return true;
                 }
             }
+
             return false;
         }
         /// <summary>
@@ -54,7 +54,7 @@ namespace CubeAgain
         {
             if (Length > 0)
             {
-                for (int i = Length - 1; i >=0; --i)
+                for (int i = Length - 1; i >= 0; --i)
                 {
                     Steps[i].Move.Visit++;
                     Steps[i].Move.WinRate += Steps[i].NextNode.Position.Evaluation;

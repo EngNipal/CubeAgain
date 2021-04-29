@@ -7,46 +7,49 @@ namespace CubeAgain
 {
     public class Neuron
     {
-        public int NumInputs { get; private set; }
-        private double[] weights { get; set; }
-        public double[] Weights
-        {
-            get => weights;
-            set
-            {
-                if (NumInputs != value.Length)
-                {
-                    throw new Exception("Неверная длина входных weights в Neuron");
-                }
-                value.CopyTo(weights, 0);
-                SetRegsum();
-                SetOutput();
-            }
-        }
         public double Bias { get; private set; }
+        public double[] GradToInputs { get; private set; }
+        public double[] GradToWeights { get; private set; }
+        public int NumInputs { get; private set; }
+        public double Output { get; private set; }
         public double Regsum { get; private set; }
-        private double[] inputs { get; set; }
         public double[] Inputs
         {
-            get => inputs;
+            get => _inputs;
             set
             {
                 if (NumInputs != value.Length)
                 {
                     throw new Exception("Неверная длина входных inputs в Neuron");
                 }
-                value.CopyTo(inputs, 0);
+                value.CopyTo(_inputs, 0);
                 SetOutput();
             }
         }
-        public double Output { get; private set; }
-        public double[] GradToInputs { get; private set; }
-        public double[] GradToWeights { get; private set; }
+
+        public double[] Weights
+        {
+            get => _weights;
+            set
+            {
+                if (NumInputs != value.Length)
+                {
+                    throw new Exception("Неверная длина входных weights в Neuron");
+                }
+                value.CopyTo(_weights, 0);
+                SetRegsum();
+                SetOutput();
+            }
+        }
+
+        private double[] _inputs { get; set; }
+        private double[] _weights { get; set; }
+
         public Neuron(int numInputs, double[] weights, double bias)
         {
             NumInputs = numInputs;
-            inputs = new double[numInputs];
-            this.weights = new double[numInputs];
+            _inputs = new double[numInputs];
+            _weights = new double[numInputs];
             Weights = weights;
             Bias = bias;
         }
@@ -77,18 +80,18 @@ namespace CubeAgain
             GradToInputs = new double[NumInputs];
             for (int i = 0; i < NumInputs; i++)
             {
-                GradToInputs[i] = weights[i] * grad;
+                GradToInputs[i] = _weights[i] * grad;
             }
             ImproveGradient(GradToInputs);
         }
         private void SetGradToWeights(double grad)
         {
-            GradToWeights = new double[weights.Length + 1];
-            for (int i = 0; i < weights.Length; i++)
+            GradToWeights = new double[_weights.Length + 1];
+            for (int i = 0; i < _weights.Length; i++)
             {
-                GradToWeights[i] = (inputs[i] * grad) + (2 * RegulCoeff * weights[i]);
+                GradToWeights[i] = (_inputs[i] * grad) + (2 * RegulCoeff * _weights[i]);
             }
-            GradToWeights[weights.Length] = grad + (2 * RegulCoeff * Bias);
+            GradToWeights[_weights.Length] = grad + (2 * RegulCoeff * Bias);
             ImproveGradient(GradToWeights);
         }
         private void ImproveGradient(double[] gradient)
@@ -110,7 +113,7 @@ namespace CubeAgain
             Output = 0.0;
             for (int i = 0; i < NumInputs; i++)
             {
-                Output += Weights[i] * inputs[i];
+                Output += Weights[i] * _inputs[i];
             }
             Output += Bias;
         }

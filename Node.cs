@@ -38,30 +38,32 @@ namespace CubeAgain
         /// <returns></returns>
         public Turns GetBestTurn()
         {
-            Turns BestTurn = Turns.R;
-            double Max = double.MinValue;
+            Turns bestTurn = Turns.R;
+            double max = double.MinValue;
             foreach (Turns turn in Steps.Keys)
             {
-                double Q = Steps[turn].Move.Quality;
-                double P = Position.Evaluation;
-                int N = Steps[turn].Move.Visit;
-                double U = P / (1 + N);                                 // TODO: Уточнить эту функцию вычисления U.
-                double UCB = Q + U;
-                if (UCB > Max)
+                double q = Steps[turn].Move.Quality;
+                double p = Position.Evaluation;
+                int n = Steps[turn].Move.Visit;
+                double u = p / (1 + n);                                 // TODO: Уточнить эту функцию вычисления U.
+                double ucb = q + u;
+                if (ucb > max)
                 {
-                    Max = UCB;
-                    BestTurn = turn;
+                    max = ucb;
+                    bestTurn = turn;
                 }
             }
-            return BestTurn;
+            return bestTurn;
         }
+
         public void SetMovesPolicy()
         {
             foreach (Turns turn in Steps.Keys)
             {
-                Steps[turn].Move.Policy = NeuralNetwork.Policy[(int)turn];
+                Steps[turn].Move.Policy = Policy[(int)turn];
             }
         }
+
         public void Expand(Path path)
         {
             for (Turns turn = Turns.R; turn <= Turns.F2; turn++)
