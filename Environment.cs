@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Collections;
 
 namespace CubeAgain
 {
-     static class Environment
+    static class Environment
      {   
         public const int Cells = 24;
         public const int MinScrLength = 1;

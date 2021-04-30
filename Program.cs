@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using static CubeAgain.Environment;
 using static CubeAgain.NeuralNetwork;
 using static CubeAgain.Training;
 
 namespace CubeAgain
 {
-    
+
     class Program
     {
         // TODO: Write tests for solution methods (2021-04-16).
