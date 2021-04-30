@@ -49,7 +49,7 @@ namespace CubeAgain
             {
                 InitWeights[i] = Rnd.NextDouble();
             }
-            HeadEval = new Neuron(InitWeights.Length, InitWeights, Rnd.NextDouble());
+            HeadEval = new Neuron(InitWeights.Length);
             Policy = new double[TurnsCount];
         }
         /// <summary>
