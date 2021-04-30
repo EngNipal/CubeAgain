@@ -29,7 +29,6 @@ namespace CubeAgain
         public double[] Outputs { get; private set; }
         private int NumInputs { get; set; }
         private Neuron[] Neurons { get; set; }
-        private readonly Random Rnd = new Random();
         public FCLayer(int numInputs, int numNeurons)
         {
             NumInputs = numInputs;
@@ -69,7 +68,7 @@ namespace CubeAgain
             {
                 for (int j = 0; j < NumInputs; j++)
                 {
-                    GradToInputs[j] += Neurons[i].GradToInputs[j];        // Это абсолютно правильно! (2021-04-09).
+                    GradToInputs[j] += Neurons[i].GradInputs[j];        // Это абсолютно правильно! (2021-04-09).
                 }
             }
             ImproveGradient(GradToInputs);
@@ -101,18 +100,15 @@ namespace CubeAgain
                 }
             }
         }
+
         private void SetWeights()
         {
-            double[] InitWeights = new double[NumInputs];
             for (int i = 0; i < NumNeurons; i++)
             {
-                for (int j = 0; j < NumInputs; j++)
-                {
-                    InitWeights[j] = Rnd.NextDouble();
-                }
-                Neurons[i] = new Neuron(NumInputs, InitWeights, Rnd.NextDouble());
+                Neurons[i] = new Neuron(NumInputs);
             }
         }
+
         private void SetRegsum()
         {
             foreach (Neuron neuron in Neurons)
@@ -120,6 +116,7 @@ namespace CubeAgain
                 RegSum += neuron.Regsum;
             }
         }
+
         private void SetNeurInputs()
         {
             foreach (Neuron neuron in Neurons)
@@ -127,6 +124,7 @@ namespace CubeAgain
                 neuron.Inputs = inputs;
             }
         }
+
         private void SetOutputs()
         {
             for (int i = 0; i < NumNeurons; i++)

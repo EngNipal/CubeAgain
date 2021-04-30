@@ -7,15 +7,19 @@ namespace CubeAgain
 {
     public class Neuron
     {
-        public double Bias { get; private set; }
-        public double[] GradToInputs { get; private set; }
-        public double[] GradToWeights { get; private set; }
+        public double[] GradInputs { get; private set; }
+        public double[] GradWeights { get; private set; }
         public int NumInputs { get; private set; }
         public double Output { get; private set; }
         public double Regsum { get; private set; }
         public double[] Inputs
         {
-            get => _inputs;
+            get
+            {
+                double[] result = new double[NumInputs];
+                _inputs.CopyTo(result, 0);
+                return result;
+            }
             set
             {
                 if (NumInputs != value.Length)
@@ -23,13 +27,18 @@ namespace CubeAgain
                     throw new Exception("Неверная длина входных inputs в Neuron");
                 }
                 value.CopyTo(_inputs, 0);
-                SetOutput();
+                Activate();
             }
         }
 
         public double[] Weights
         {
-            get => _weights;
+            get
+            {
+                double[] result = new double[NumInputs];
+                _weights.CopyTo(result, 0);
+                return result;
+            }
             set
             {
                 if (NumInputs != value.Length)
@@ -38,20 +47,26 @@ namespace CubeAgain
                 }
                 value.CopyTo(_weights, 0);
                 SetRegsum();
-                SetOutput();
+                _activated = false;
             }
         }
 
+        private bool _activated { get; set; }
+        private double _bias { get; set; }
         private double[] _inputs { get; set; }
         private double[] _weights { get; set; }
 
-        public Neuron(int numInputs, double[] weights, double bias)
+        public Neuron(int numInputs)
         {
+            Random rnd = new Random();
             NumInputs = numInputs;
             _inputs = new double[numInputs];
             _weights = new double[numInputs];
-            Weights = weights;
-            Bias = bias;
+            for (int i = 0; i < numInputs; i++)
+            {
+                _weights[i] = rnd.NextDouble();
+            }
+            _bias = rnd.NextDouble();
         }
         // Для нейрона получаем значение ошибки на выходе и массив входных значений (какие были значения когда-то).
         //public void CorrectWeights(double[] Xinput, double grad)
@@ -70,30 +85,49 @@ namespace CubeAgain
         //    ImproveGradient();
         //    WeightsChanged = true;
         //}
-        public void SetGradients(double gradient)
+
+        public void Activate()
         {
-            SetGradToWeights(gradient);
-            SetGradToInputs(gradient);
-        }
-        private void SetGradToInputs(double grad)
-        {
-            GradToInputs = new double[NumInputs];
+            if (_activated)
+            {
+                return;
+            }
+            Output = 0.0;
             for (int i = 0; i < NumInputs; i++)
             {
-                GradToInputs[i] = _weights[i] * grad;
+                Output += Weights[i] * _inputs[i];
             }
-            ImproveGradient(GradToInputs);
+            Output += _bias;
+            _activated = true;
         }
-        private void SetGradToWeights(double grad)
+
+        public void SetGradients(double gradient)
         {
-            GradToWeights = new double[_weights.Length + 1];
+            SetGradWeights(gradient);
+            SetGradInputs(gradient);
+        }
+
+        private void SetGradInputs(double gradient)
+        {
+            GradInputs = new double[NumInputs];
+            for (int i = 0; i < NumInputs; i++)
+            {
+                GradInputs[i] = _weights[i] * gradient;
+            }
+            ImproveGradient(GradInputs);
+        }
+
+        private void SetGradWeights(double grad)
+        {
+            GradWeights = new double[_weights.Length + 1];
             for (int i = 0; i < _weights.Length; i++)
             {
-                GradToWeights[i] = (_inputs[i] * grad) + (2 * RegulCoeff * _weights[i]);
+                GradWeights[i] = (_inputs[i] * grad) + (2 * RegulCoeff * _weights[i]);
             }
-            GradToWeights[_weights.Length] = grad + (2 * RegulCoeff * Bias);
-            ImproveGradient(GradToWeights);
+            GradWeights[_weights.Length] = grad + (2 * RegulCoeff * _bias);
+            ImproveGradient(GradWeights);
         }
+
         private void ImproveGradient(double[] gradient)
         {
             for (int i = 0; i < gradient.Length; i++)
@@ -104,18 +138,10 @@ namespace CubeAgain
                 }
             }
         }
+
         private void SetRegsum()
         {
-            Regsum = Weights.Sum(elem => elem * elem) + (Bias * Bias);
-        }
-        private void SetOutput()
-        {
-            Output = 0.0;
-            for (int i = 0; i < NumInputs; i++)
-            {
-                Output += Weights[i] * _inputs[i];
-            }
-            Output += Bias;
+            Regsum = Weights.Sum(elem => elem * elem) + (_bias * _bias);
         }
     }
 }
